@@ -314,14 +314,18 @@ export default function DashboardPage() {
                             ))}
                         </div>
 
-                        {/* 未割り当てタスク */}
-                        {unscheduledTasks.length > 0 && (
-                            <div
-                                className="mt-4 p-3 rounded-lg border border-dashed border-white/20 bg-white/5"
-                                onDragOver={handleDragOver}
-                                onDrop={(e) => handleDrop(e, null)}
-                            >
-                                <div className="text-gray-400 text-sm mb-2">📥 未割り当てタスク（ドラッグして曜日に配置）</div>
+                        {/* 未割り当てタスク（常に表示してドロップゾーンとして機能） */}
+                        <div
+                            className={`mt-4 p-3 rounded-lg border border-dashed bg-white/5 transition-colors ${draggedTask ? "border-purple-500/50 bg-purple-500/10" : "border-white/20"
+                                }`}
+                            onDragOver={handleDragOver}
+                            onDrop={(e) => handleDrop(e, null)}
+                        >
+                            <div className="text-gray-400 text-sm mb-2">
+                                📥 未割り当てタスク
+                                {draggedTask && <span className="text-purple-400 ml-2">（ここにドロップで曜日を解除）</span>}
+                            </div>
+                            {unscheduledTasks.length > 0 ? (
                                 <div className="flex flex-wrap gap-2">
                                     {unscheduledTasks.map(task => (
                                         <div
@@ -345,8 +349,12 @@ export default function DashboardPage() {
                                         </div>
                                     ))}
                                 </div>
-                            </div>
-                        )}
+                            ) : (
+                                <div className="text-gray-500 text-sm py-2">
+                                    すべてのタスクが曜日に割り当てられています
+                                </div>
+                            )}
+                        </div>
                     </CardContent>
                 </Card>
 
