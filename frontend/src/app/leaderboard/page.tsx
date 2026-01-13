@@ -1,4 +1,5 @@
 "use client";
+import { API_BASE_URL } from "@/lib/api";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -52,7 +53,7 @@ export default function LeaderboardPage() {
         const fetchLeaderboard = async () => {
             setLoading(true);
             try {
-                const res = await fetch(`http://localhost:3001/api/leaderboard?period=${period}&limit=20`);
+                const res = await fetch(`${API_BASE_URL}/api/leaderboard?period=${period}&limit=20`);
                 const data = await res.json();
                 if (data.success) {
                     setLeaders(data.data);

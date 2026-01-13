@@ -1,4 +1,5 @@
 "use client";
+import { API_BASE_URL } from "@/lib/api";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -51,7 +52,7 @@ export default function RewardsPage() {
 
     const fetchRedemptions = async (token: string) => {
         try {
-            const res = await fetch("http://localhost:3001/api/rewards/redemptions", {
+            const res = await fetch(`${API_BASE_URL}/api/rewards/redemptions`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
             const data = await res.json();
@@ -79,8 +80,8 @@ export default function RewardsPage() {
         const fetchData = async () => {
             try {
                 const [rewardsRes, userRes] = await Promise.all([
-                    fetch("http://localhost:3001/api/rewards"),
-                    fetch("http://localhost:3001/api/users/me", {
+                    fetch(`${API_BASE_URL}/api/rewards`),
+                    fetch(`${API_BASE_URL}/api/users/me`, {
                         headers: { Authorization: `Bearer ${token}` },
                     }),
                 ]);
@@ -114,7 +115,7 @@ export default function RewardsPage() {
 
         setRedeeming(true);
         try {
-            const res = await fetch("http://localhost:3001/api/rewards/redeem", {
+            const res = await fetch(`${API_BASE_URL}/api/rewards/redeem`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -126,7 +127,7 @@ export default function RewardsPage() {
             const result = await res.json();
             if (result.success) {
                 // ユーザー情報を更新
-                const userRes = await fetch("http://localhost:3001/api/users/me", {
+                const userRes = await fetch(`${API_BASE_URL}/api/users/me`, {
                     headers: { Authorization: `Bearer ${token}` },
                 });
                 const userData = await userRes.json();

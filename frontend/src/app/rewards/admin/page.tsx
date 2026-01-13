@@ -1,4 +1,5 @@
 "use client";
+import { API_BASE_URL } from "@/lib/api";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -86,7 +87,7 @@ export default function RewardsAdminPage() {
         if (!token) return;
 
         try {
-            const res = await fetch("http://localhost:3001/api/rewards/admin/all", {
+            const res = await fetch(`${API_BASE_URL}/api/rewards/admin/all`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
             const data = await res.json();
@@ -177,7 +178,7 @@ export default function RewardsAdminPage() {
         if (!token) return;
 
         try {
-            const res = await fetch(`http://localhost:3001/api/rewards/${id}`, {
+            const res = await fetch(`${API_BASE_URL}/api/rewards/${id}`, {
                 method: "DELETE",
                 headers: { Authorization: `Bearer ${token}` },
             });

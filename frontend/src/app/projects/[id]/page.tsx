@@ -1,4 +1,5 @@
 "use client";
+import { API_BASE_URL } from "@/lib/api";
 
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
@@ -78,7 +79,7 @@ export default function ProjectDetailPage() {
 
         const fetchProject = async () => {
             try {
-                const res = await fetch(`http://localhost:3001/api/projects/${projectId}`, {
+                const res = await fetch(`${API_BASE_URL}/api/projects/${projectId}`, {
                     headers: { Authorization: `Bearer ${token}` },
                 });
                 const data = await res.json();
@@ -113,7 +114,7 @@ export default function ProjectDetailPage() {
         if (!token) return;
 
         try {
-            const res = await fetch(`http://localhost:3001/api/tasks/${taskId}/status`, {
+            const res = await fetch(`${API_BASE_URL}/api/tasks/${taskId}/status`, {
                 method: "PATCH",
                 headers: {
                     "Content-Type": "application/json",

@@ -1,4 +1,5 @@
 "use client";
+import { API_BASE_URL } from "@/lib/api";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -85,8 +86,8 @@ export default function BadgesPage() {
         const token = localStorage.getItem("token");
         try {
             const [allRes, myRes] = await Promise.all([
-                fetch("http://localhost:3001/api/badges"),
-                fetch("http://localhost:3001/api/badges/my", {
+                fetch(`${API_BASE_URL}/api/badges`),
+                fetch(`${API_BASE_URL}/api/badges/my`, {
                     headers: { Authorization: `Bearer ${token}` },
                 }),
             ]);
@@ -108,7 +109,7 @@ export default function BadgesPage() {
         if (!token || !newBadge.name) return;
 
         try {
-            const res = await fetch("http://localhost:3001/api/badges", {
+            const res = await fetch(`${API_BASE_URL}/api/badges`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -135,7 +136,7 @@ export default function BadgesPage() {
         if (!token) return;
 
         try {
-            const res = await fetch(`http://localhost:3001/api/badges/${editBadge.id}`, {
+            const res = await fetch(`${API_BASE_URL}/api/badges/${editBadge.id}`, {
                 method: "PATCH",
                 headers: {
                     "Content-Type": "application/json",
@@ -168,7 +169,7 @@ export default function BadgesPage() {
         if (!token) return;
 
         try {
-            const res = await fetch(`http://localhost:3001/api/badges/${id}`, {
+            const res = await fetch(`${API_BASE_URL}/api/badges/${id}`, {
                 method: "DELETE",
                 headers: { Authorization: `Bearer ${token}` }
             });

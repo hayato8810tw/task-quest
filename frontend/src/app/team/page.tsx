@@ -1,4 +1,5 @@
 "use client";
+import { API_BASE_URL } from "@/lib/api";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -75,13 +76,13 @@ export default function TeamPage() {
         const fetchData = async () => {
             try {
                 const [membersRes, tasksRes, statsRes] = await Promise.all([
-                    fetch("http://localhost:3001/api/team/members", {
+                    fetch(`${API_BASE_URL}/api/team/members`, {
                         headers: { Authorization: `Bearer ${token}` },
                     }),
-                    fetch("http://localhost:3001/api/team/tasks", {
+                    fetch(`${API_BASE_URL}/api/team/tasks`, {
                         headers: { Authorization: `Bearer ${token}` },
                     }),
-                    fetch("http://localhost:3001/api/team/stats", {
+                    fetch(`${API_BASE_URL}/api/team/stats`, {
                         headers: { Authorization: `Bearer ${token}` },
                     }),
                 ]);

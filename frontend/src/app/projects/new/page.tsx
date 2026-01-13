@@ -1,4 +1,5 @@
 "use client";
+import { API_BASE_URL } from "@/lib/api";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -28,7 +29,7 @@ export default function NewProjectPage() {
         }
 
         try {
-            const res = await fetch("http://localhost:3001/api/projects", {
+            const res = await fetch(`${API_BASE_URL}/api/projects`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

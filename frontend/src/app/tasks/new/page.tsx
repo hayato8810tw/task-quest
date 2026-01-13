@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Navbar } from "@/components/Navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -33,7 +33,7 @@ interface Epic {
     project_id: string;
 }
 
-export default function NewTaskPage() {
+function NewTaskForm() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const epicIdParam = searchParams.get("epicId");
@@ -74,14 +74,14 @@ export default function NewTaskPage() {
 
         // 並列でデータ取得
         Promise.all([
-            fetch("http://localhost:3001/api/users", {
-                headers: { Authorization: `Bearer ${ token }` },
-            }).then(res => res.json()),
-            fetch(`${ API_BASE_URL } / projects", {
+            fetch(`${API_BASE_URL}/api/users`, {
                 headers: { Authorization: `Bearer ${token}` },
             }).then(res => res.json()),
-        fetch("http://localhost:3001/api/epics", {
-                headers: { Authorization: `Bearer ${ token }` },
+            fetch(`${API_BASE_URL}/api/projects`, {
+                headers: { Authorization: `Bearer ${token}` },
+            }).then(res => res.json()),
+            fetch(`${API_BASE_URL}/api/epics`, {
+                headers: { Authorization: `Bearer ${token}` },
             }).then(res => res.json()),
         ]).then(([usersData, projectsData, epicsData]) => {
             if (usersData.success) {
@@ -141,43 +141,43 @@ export default function NewTaskPage() {
 
         setCreatingProject(true);
         try {
-            const res = await fetch(`${ API_BASE_URL } / projects", {
-                method: "POST",
-            headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-        },
-            body: JSON.stringify({ title: newProjectTitle.trim() }),
-            });
-const data = await res.json();
-if (data.success) {
-    const newProject = data.data;
-    setProjects([...projects, { id: newProject.id, title: newProject.title }]);
-    setSelectedProjectId(newProject.id);
-    setNewProjectTitle("");
-    setShowNewProjectModal(false);
-} else {
-    alert(data.error || "プロジェクトの作成に失敗しました");
-}
-        } catch {
-    alert("プロジェクトの作成に失敗しました");
-} finally {
-    setCreatingProject(false);
-}
-    };
-
-// 新規エピック作成
-const handleCreateEpic = async () => {
-    const token = localStorage.getItem("token");
-    if (!token || !newEpicTitle.trim() || !selectedProjectId || selectedProjectId === "none") return;
-
-    setCreatingEpic(true);
-    try {
-        const res = await fetch("http://localhost:3001/api/epics", {
+            const res = await fetch(`${API_BASE_URL}/api/projects`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    Authorization: `Bearer ${ token }`,
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({ title: newProjectTitle.trim() }),
+            });
+            const data = await res.json();
+            if (data.success) {
+                const newProject = data.data;
+                setProjects([...projects, { id: newProject.id, title: newProject.title }]);
+                setSelectedProjectId(newProject.id);
+                setNewProjectTitle("");
+                setShowNewProjectModal(false);
+            } else {
+                alert(data.error || "プロジェクトの作成に失敗しました");
+            }
+        } catch {
+            alert("プロジェクトの作成に失敗しました");
+        } finally {
+            setCreatingProject(false);
+        }
+    };
+
+    // 新規エピック作成
+    const handleCreateEpic = async () => {
+        const token = localStorage.getItem("token");
+        if (!token || !newEpicTitle.trim() || !selectedProjectId || selectedProjectId === "none") return;
+
+        setCreatingEpic(true);
+        try {
+            const res = await fetch(`${API_BASE_URL}/api/epics`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
                 },
                 body: JSON.stringify({
                     title: newEpicTitle.trim(),
@@ -222,56 +222,56 @@ const handleCreateEpic = async () => {
         console.log("Calling AI API...");
 
         try {
-            const res = await fetch(`${ API_BASE_URL } / ai / suggest - points", {
-                method: "POST",
-            headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-        },
-            body: JSON.stringify({
-                title: formData.title,
-                description: formData.description,
-                priority: formData.priority,
-                difficulty: formData.difficulty,
-                deadline: formData.deadline,
-            }),
-            });
-
-    console.log("Response status:", res.status);
-    const data = await res.json();
-    console.log("Response data:", data);
-
-    if (data.success) {
-        setFormData({
-            ...formData,
-            base_points: String(data.data.base_points),
-            bonus_xp: String(data.data.bonus_xp),
-        });
-        setAiReasoning(data.data.reasoning || "");
-    } else {
-        alert(data.error || "AI推奨値の取得に失敗しました");
-    }
-} catch (error: any) {
-    console.error("AI API Error:", error);
-    alert(`AI推奨値の取得に失敗しました: ${error?.message || 'Unknown error'}`);
-} finally {
-    setAiLoading(false);
-}
-    };
-
-const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-
-    const token = localStorage.getItem("token");
-    if (!token) return;
-
-    try {
-        const res = await fetch("http://localhost:3001/api/tasks", {
+            const res = await fetch(`${API_BASE_URL}/api/ai/suggest-points`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    Authorization: `Bearer ${ token }`,
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({
+                    title: formData.title,
+                    description: formData.description,
+                    priority: formData.priority,
+                    difficulty: formData.difficulty,
+                    deadline: formData.deadline,
+                }),
+            });
+
+            console.log("Response status:", res.status);
+            const data = await res.json();
+            console.log("Response data:", data);
+
+            if (data.success) {
+                setFormData({
+                    ...formData,
+                    base_points: String(data.data.base_points),
+                    bonus_xp: String(data.data.bonus_xp),
+                });
+                setAiReasoning(data.data.reasoning || "");
+            } else {
+                alert(data.error || "AI推奨値の取得に失敗しました");
+            }
+        } catch (error: any) {
+            console.error("AI API Error:", error);
+            alert(`AI推奨値の取得に失敗しました: ${error?.message || 'Unknown error'}`);
+        } finally {
+            setAiLoading(false);
+        }
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setLoading(true);
+
+        const token = localStorage.getItem("token");
+        if (!token) return;
+
+        try {
+            const res = await fetch(`${API_BASE_URL}/api/tasks`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
                 },
                 body: JSON.stringify({
                     ...formData,
@@ -286,7 +286,7 @@ const handleSubmit = async (e: React.FormEvent) => {
             if (result.success) {
                 // エピックが選択されていればプロジェクト詳細へ、それ以外はタスク一覧へ
                 if (formData.epicId) {
-                    router.push(`/ projects / ${ selectedProjectId }`);
+                    router.push(`/projects/${selectedProjectId}`);
                 } else {
                     router.push("/tasks");
                 }
@@ -620,5 +620,17 @@ const handleSubmit = async (e: React.FormEvent) => {
                 </div>
             )}
         </div>
+    );
+}
+
+export default function NewTaskPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
+                <div className="text-white text-xl">読み込み中...</div>
+            </div>
+        }>
+            <NewTaskForm />
+        </Suspense>
     );
 }

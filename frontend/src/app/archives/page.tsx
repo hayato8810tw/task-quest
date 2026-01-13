@@ -1,4 +1,5 @@
 "use client";
+import { API_BASE_URL } from "@/lib/api";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -91,13 +92,13 @@ export default function ArchivesPage() {
 
         try {
             const [tasksRes, epicsRes, projectsRes] = await Promise.all([
-                fetch("http://localhost:3001/api/archives/tasks", {
+                fetch(`${API_BASE_URL}/api/archives/tasks`, {
                     headers: { Authorization: `Bearer ${token}` },
                 }),
-                fetch("http://localhost:3001/api/archives/epics", {
+                fetch(`${API_BASE_URL}/api/archives/epics`, {
                     headers: { Authorization: `Bearer ${token}` },
                 }),
-                fetch("http://localhost:3001/api/archives/projects", {
+                fetch(`${API_BASE_URL}/api/archives/projects`, {
                     headers: { Authorization: `Bearer ${token}` },
                 }),
             ]);
@@ -123,7 +124,7 @@ export default function ArchivesPage() {
         if (!token) return;
 
         try {
-            const res = await fetch(`http://localhost:3001/api/archives/candidates/${type}`, {
+            const res = await fetch(`${API_BASE_URL}/api/archives/candidates/${type}`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
             const data = await res.json();
@@ -141,7 +142,7 @@ export default function ArchivesPage() {
         if (!token) return;
 
         try {
-            const res = await fetch(`http://localhost:3001/api/archives/${type}/${id}`, {
+            const res = await fetch(`${API_BASE_URL}/api/archives/${type}/${id}`, {
                 method: "POST",
                 headers: { Authorization: `Bearer ${token}` },
             });
@@ -165,7 +166,7 @@ export default function ArchivesPage() {
 
         try {
             for (const candidate of candidates) {
-                await fetch(`http://localhost:3001/api/archives/${activeTab}/${candidate.id}`, {
+                await fetch(`${API_BASE_URL}/api/archives/${activeTab}/${candidate.id}`, {
                     method: "POST",
                     headers: { Authorization: `Bearer ${token}` },
                 });
@@ -185,7 +186,7 @@ export default function ArchivesPage() {
         if (!token) return;
 
         try {
-            const res = await fetch(`http://localhost:3001/api/archives/${type}/${id}`, {
+            const res = await fetch(`${API_BASE_URL}/api/archives/${type}/${id}`, {
                 method: "DELETE",
                 headers: { Authorization: `Bearer ${token}` },
             });
