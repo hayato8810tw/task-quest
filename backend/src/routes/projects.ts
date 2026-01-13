@@ -17,7 +17,8 @@ router.get('/', authMiddleware, async (req: Request, res: Response) => {
                     where: { isArchived: false },
                     include: {
                         tasks: {
-                            where: { isArchived: false }
+                            where: { isArchived: false },
+                            orderBy: { createdAt: 'desc' }
                         }
                     }
                 },
@@ -28,20 +29,27 @@ router.get('/', authMiddleware, async (req: Request, res: Response) => {
                         department: true
                     }
                 }
-            },
-            orderBy: { createdAt: 'desc' }
+            }
         });
 
-        // 各プロジェクトの進捗を計算
+        // 各プロジェクトの進捗を計算し、最新タスク追加日を取得
         const projectsWithProgress = projects.map(project => {
             let totalTasks = 0;
             let completedTasks = 0;
             let inProgressTasks = 0;
+            let latestTaskDate: Date | null = null;
 
             project.epics.forEach(epic => {
                 totalTasks += epic.tasks.length;
                 completedTasks += epic.tasks.filter(t => t.status === 'COMPLETED').length;
                 inProgressTasks += epic.tasks.filter(t => t.status === 'IN_PROGRESS').length;
+
+                // 最新のタスク作成日を取得
+                epic.tasks.forEach(task => {
+                    if (!latestTaskDate || task.createdAt > latestTaskDate) {
+                        latestTaskDate = task.createdAt;
+                    }
+                });
             });
 
             return {
@@ -56,8 +64,16 @@ router.get('/', authMiddleware, async (req: Request, res: Response) => {
                 completed_tasks: completedTasks,
                 in_progress_tasks: inProgressTasks,
                 progress: totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0,
-                created_at: project.createdAt
+                created_at: project.createdAt,
+                latest_task_at: latestTaskDate
             };
+        });
+
+        // 最新タスク追加日順でソート（タスクがないプロジェクトはプロジェクト作成日でフォールバック）
+        projectsWithProgress.sort((a, b) => {
+            const dateA = a.latest_task_at || a.created_at;
+            const dateB = b.latest_task_at || b.created_at;
+            return new Date(dateB).getTime() - new Date(dateA).getTime();
         });
 
         res.json({
