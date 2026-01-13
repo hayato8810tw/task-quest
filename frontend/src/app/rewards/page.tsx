@@ -163,6 +163,44 @@ export default function RewardsPage() {
         REJECTED: { label: "却下", color: "bg-red-500/20 text-red-300" },
     };
 
+    // 報酬をグループ化（同じ名前+カテゴリ+ポイントをまとめる）
+    interface GroupedReward {
+        name: string;
+        description: string;
+        category: string;
+        points_required: number;
+        image_url: string;
+        total_stock: number;
+        reward_ids: string[];
+    }
+
+    const groupRewards = (rewardList: Reward[]): GroupedReward[] => {
+        const groups = new Map<string, GroupedReward>();
+
+        rewardList.forEach(reward => {
+            const key = `${reward.name}-${reward.category}-${reward.points_required}`;
+            if (groups.has(key)) {
+                const existing = groups.get(key)!;
+                existing.total_stock += reward.stock ?? 1;
+                existing.reward_ids.push(reward.id);
+            } else {
+                groups.set(key, {
+                    name: reward.name,
+                    description: reward.description,
+                    category: reward.category,
+                    points_required: reward.points_required,
+                    image_url: reward.image_url,
+                    total_stock: reward.stock ?? 1,
+                    reward_ids: [reward.id],
+                });
+            }
+        });
+
+        return Array.from(groups.values());
+    };
+
+    const groupedRewards = groupRewards(rewards);
+
     if (loading) {
         return (
             <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
@@ -237,7 +275,7 @@ export default function RewardsPage() {
                 {activeTab === "catalog" && (
                     <>
                         {Object.entries(categoryLabels).map(([category, { label, icon }]) => {
-                            const categoryRewards = rewards.filter((r) => r.category === category);
+                            const categoryRewards = groupedRewards.filter((r) => r.category === category);
                             if (categoryRewards.length === 0) return null;
 
                             return (
@@ -246,42 +284,46 @@ export default function RewardsPage() {
                                         <span>{icon}</span> {label}
                                     </h3>
                                     <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                                        {categoryRewards.map((reward) => {
-                                            const canAfford = (user?.available_points || 0) >= reward.points_required;
-                                            const outOfStock = reward.stock !== null && reward.stock <= 0;
+                                        {categoryRewards.map((grouped) => {
+                                            const canAfford = (user?.available_points || 0) >= grouped.points_required;
+                                            const outOfStock = grouped.total_stock <= 0;
+                                            // 交換時に使う実際のRewardを見つける
+                                            const availableReward = rewards.find(r =>
+                                                grouped.reward_ids.includes(r.id) && (r.stock === null || r.stock > 0)
+                                            );
 
                                             return (
                                                 <Card
-                                                    key={reward.id}
+                                                    key={grouped.name + grouped.points_required}
                                                     className={`bg-white/5 border-white/10 backdrop-blur transition-all ${canAfford && !outOfStock
                                                         ? "hover:bg-white/10 hover:border-purple-500/50 cursor-pointer"
                                                         : "opacity-60"
                                                         }`}
-                                                    onClick={() => canAfford && !outOfStock && setSelectedReward(reward)}
+                                                    onClick={() => canAfford && !outOfStock && availableReward && setSelectedReward(availableReward)}
                                                 >
                                                     <CardContent className="pt-4">
                                                         <div className="text-center mb-3">
-                                                            <span className="text-4xl">{reward.image_url}</span>
+                                                            <span className="text-4xl">{grouped.image_url}</span>
                                                         </div>
                                                         <h4 className="text-white font-medium text-center mb-1">
-                                                            {reward.name}
+                                                            {grouped.name}
                                                         </h4>
                                                         <p className="text-gray-400 text-xs text-center mb-3">
-                                                            {reward.description}
+                                                            {grouped.description}
                                                         </p>
                                                         <div className="flex items-center justify-between">
                                                             <span className="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-400">
-                                                                {reward.points_required.toLocaleString()} pt
+                                                                {grouped.points_required.toLocaleString()} pt
                                                             </span>
                                                             {outOfStock ? (
                                                                 <Badge variant="outline" className="text-red-400 border-red-500/50">
                                                                     在庫切れ
                                                                 </Badge>
-                                                            ) : reward.stock !== null ? (
-                                                                <Badge variant="outline" className="text-gray-400">
-                                                                    残り {reward.stock}
+                                                            ) : (
+                                                                <Badge variant="outline" className="text-green-400 border-green-500/50">
+                                                                    在庫 {grouped.total_stock}
                                                                 </Badge>
-                                                            ) : null}
+                                                            )}
                                                         </div>
                                                     </CardContent>
                                                 </Card>
