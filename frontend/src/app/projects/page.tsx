@@ -295,58 +295,109 @@ export default function ProjectsPage() {
                     )}
                 </div>
 
-                {/* チーム統計サマリー */}
-                {isManager && stats && (
-                    <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
-                        <Card className="bg-white/5 border-white/10 backdrop-blur">
-                            <CardContent className="py-4 text-center">
-                                <div className="text-3xl font-bold text-purple-400">{projects.length}</div>
-                                <div className="text-sm text-gray-400">プロジェクト</div>
-                            </CardContent>
-                        </Card>
-                        <Card className="bg-white/5 border-white/10 backdrop-blur">
-                            <CardContent className="py-4 text-center">
-                                <div className="text-3xl font-bold text-blue-400">{stats.member_count}</div>
-                                <div className="text-sm text-gray-400">メンバー</div>
-                            </CardContent>
-                        </Card>
-                        <Card className="bg-white/5 border-white/10 backdrop-blur">
-                            <CardContent className="py-4 text-center">
-                                <div className="text-3xl font-bold text-yellow-400">{stats.tasks_pending}</div>
-                                <div className="text-sm text-gray-400">未着手</div>
-                            </CardContent>
-                        </Card>
-                        <Card className="bg-white/5 border-white/10 backdrop-blur">
-                            <CardContent className="py-4 text-center">
-                                <div className="text-3xl font-bold text-cyan-400">{stats.tasks_in_progress}</div>
-                                <div className="text-sm text-gray-400">進行中</div>
-                            </CardContent>
-                        </Card>
-                        <Card className="bg-white/5 border-white/10 backdrop-blur">
-                            <CardContent className="py-4 text-center">
-                                <div className="text-3xl font-bold text-green-400">{stats.tasks_completed}</div>
-                                <div className="text-sm text-gray-400">完了</div>
-                            </CardContent>
-                        </Card>
-                    </div>
-                )}
+                {/* 統計サマリー（チーム + 個人） */}
+                {(() => {
+                    // 個人タスク統計を計算
+                    const myPending = userTasks.filter(t => t.status === "PENDING").length;
+                    const myInProgress = userTasks.filter(t => t.status === "IN_PROGRESS").length;
+                    const myCompleted = userTasks.filter(t => t.status === "COMPLETED").length;
+                    const myTotal = myPending + myInProgress + myCompleted;
+                    const myProgress = myTotal > 0 ? Math.round((myCompleted / myTotal) * 100) : 0;
 
-                {/* 全体進捗バー */}
-                {totalTasks > 0 && (
-                    <Card className="bg-white/5 border-white/10 backdrop-blur mb-6">
-                        <CardContent className="py-4">
-                            <div className="flex items-center gap-4">
-                                <div className="flex-1">
-                                    <div className="flex justify-between text-sm text-gray-300 mb-2">
-                                        <span>全プロジェクト進捗</span>
-                                        <span>{overallProgress}% ({completedTasks}/{totalTasks} タスク)</span>
+                    return (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                            {/* 個人タスク統計 */}
+                            <Card className="bg-gradient-to-br from-purple-900/50 to-blue-900/50 border-purple-500/30 backdrop-blur">
+                                <CardHeader className="pb-2">
+                                    <CardTitle className="text-white text-base flex items-center gap-2">
+                                        👤 あなたのタスク
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="grid grid-cols-4 gap-2 text-center mb-3">
+                                        <div className="bg-white/10 rounded-lg p-2">
+                                            <div className="text-2xl font-bold text-white">{myTotal}</div>
+                                            <div className="text-xs text-gray-400">全体</div>
+                                        </div>
+                                        <div className="bg-white/10 rounded-lg p-2">
+                                            <div className="text-2xl font-bold text-yellow-400">{myPending}</div>
+                                            <div className="text-xs text-gray-400">未着手</div>
+                                        </div>
+                                        <div className="bg-white/10 rounded-lg p-2">
+                                            <div className="text-2xl font-bold text-cyan-400">{myInProgress}</div>
+                                            <div className="text-xs text-gray-400">進行中</div>
+                                        </div>
+                                        <div className="bg-white/10 rounded-lg p-2">
+                                            <div className="text-2xl font-bold text-green-400">{myCompleted}</div>
+                                            <div className="text-xs text-gray-400">完了</div>
+                                        </div>
                                     </div>
-                                    <Progress value={overallProgress} className="h-3 bg-blue-900/50" indicatorClassName="bg-gradient-to-r from-blue-500 to-cyan-400" />
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-                )}
+                                    <div className="flex justify-between text-sm text-gray-300 mb-1">
+                                        <span>進捗</span>
+                                        <span>{myProgress}%</span>
+                                    </div>
+                                    <Progress value={myProgress} className="h-2 bg-purple-900/50" indicatorClassName="bg-gradient-to-r from-purple-500 to-pink-400" />
+                                </CardContent>
+                            </Card>
+
+                            {/* チーム全体統計（マネージャー以上のみ） */}
+                            {isManager && stats ? (
+                                <Card className="bg-gradient-to-br from-blue-900/50 to-cyan-900/50 border-blue-500/30 backdrop-blur">
+                                    <CardHeader className="pb-2">
+                                        <CardTitle className="text-white text-base flex items-center gap-2">
+                                            👥 チーム全体
+                                        </CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <div className="grid grid-cols-4 gap-2 text-center mb-3">
+                                            <div className="bg-white/10 rounded-lg p-2">
+                                                <div className="text-2xl font-bold text-white">{stats.total_tasks}</div>
+                                                <div className="text-xs text-gray-400">全体</div>
+                                            </div>
+                                            <div className="bg-white/10 rounded-lg p-2">
+                                                <div className="text-2xl font-bold text-yellow-400">{stats.tasks_pending}</div>
+                                                <div className="text-xs text-gray-400">未着手</div>
+                                            </div>
+                                            <div className="bg-white/10 rounded-lg p-2">
+                                                <div className="text-2xl font-bold text-cyan-400">{stats.tasks_in_progress}</div>
+                                                <div className="text-xs text-gray-400">進行中</div>
+                                            </div>
+                                            <div className="bg-white/10 rounded-lg p-2">
+                                                <div className="text-2xl font-bold text-green-400">{stats.tasks_completed}</div>
+                                                <div className="text-xs text-gray-400">完了</div>
+                                            </div>
+                                        </div>
+                                        <div className="flex justify-between text-sm text-gray-300 mb-1">
+                                            <span>進捗（{stats.member_count}人）</span>
+                                            <span>{stats.total_tasks > 0 ? Math.round((stats.tasks_completed / stats.total_tasks) * 100) : 0}%</span>
+                                        </div>
+                                        <Progress value={stats.total_tasks > 0 ? Math.round((stats.tasks_completed / stats.total_tasks) * 100) : 0} className="h-2 bg-blue-900/50" indicatorClassName="bg-gradient-to-r from-blue-500 to-cyan-400" />
+                                    </CardContent>
+                                </Card>
+                            ) : (
+                                <Card className="bg-white/5 border-white/10 backdrop-blur">
+                                    <CardHeader className="pb-2">
+                                        <CardTitle className="text-white text-base flex items-center gap-2">
+                                            📁 プロジェクト概要
+                                        </CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <div className="grid grid-cols-2 gap-4 text-center">
+                                            <div className="bg-white/10 rounded-lg p-3">
+                                                <div className="text-3xl font-bold text-purple-400">{projects.length}</div>
+                                                <div className="text-sm text-gray-400">プロジェクト</div>
+                                            </div>
+                                            <div className="bg-white/10 rounded-lg p-3">
+                                                <div className="text-3xl font-bold text-blue-400">{projects.reduce((sum, p) => sum + p.epic_count, 0)}</div>
+                                                <div className="text-sm text-gray-400">エピック</div>
+                                            </div>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            )}
+                        </div>
+                    );
+                })()}
 
                 {/* 表示切り替え */}
                 {isManager && (
