@@ -492,7 +492,7 @@ export default function ProjectDetailPage() {
                                                 <Button
                                                     variant="ghost"
                                                     size="sm"
-                                                    onClick={() => router.push(`/tasks/new?epicId=${epic.id}`)}
+                                                    onClick={() => router.push(`/tasks/new?projectId=${projectId}&epicId=${epic.id}`)}
                                                     className="text-purple-400 hover:text-purple-300"
                                                 >
                                                     + タスクを追加
