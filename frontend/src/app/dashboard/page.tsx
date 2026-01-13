@@ -535,8 +535,8 @@ export default function DashboardPage() {
                                                 disabled={updatingStatus || selectedTask.status === status.key}
                                                 onClick={() => handleStatusChange(selectedTask.id, status.key)}
                                                 className={`${selectedTask.status === status.key
-                                                        ? status.color + " ring-2 ring-white ring-offset-2 ring-offset-slate-900"
-                                                        : "bg-white/10 hover:bg-white/20"
+                                                    ? status.color + " ring-2 ring-white ring-offset-2 ring-offset-slate-900"
+                                                    : "bg-white/10 hover:bg-white/20"
                                                     } transition-all`}
                                             >
                                                 {status.label}
@@ -581,9 +581,8 @@ export default function DashboardPage() {
 
                                 {/* 閉じるボタン */}
                                 <Button
-                                    variant="outline"
                                     onClick={() => setSelectedTask(null)}
-                                    className="w-full border-white/20 text-white hover:bg-white/10"
+                                    className="w-full bg-white/10 border border-white/20 text-white hover:bg-white/20"
                                 >
                                     閉じる
                                 </Button>
