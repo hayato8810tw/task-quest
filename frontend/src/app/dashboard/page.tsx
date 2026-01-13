@@ -233,6 +233,33 @@ export default function DashboardPage() {
         .filter(t => !(t as any).scheduled_day && t.status !== "COMPLETED")
         .sort((a, b) => (statusOrder[a.status] ?? 99) - (statusOrder[b.status] ?? 99));
 
+    // 今日の日付（0時0分基準）
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // 1週間前の日付
+    const weekAgo = new Date(today);
+    weekAgo.setDate(weekAgo.getDate() - 7);
+
+    // 本日完了したタスク
+    const completedToday = tasks.filter(t => {
+        if (t.status !== "COMPLETED" || !(t as any).completedAt) return false;
+        const completedDate = new Date((t as any).completedAt);
+        completedDate.setHours(0, 0, 0, 0);
+        return completedDate.getTime() === today.getTime();
+    });
+
+    // 1週間以内に完了したタスク（今日除く）
+    const completedThisWeek = tasks.filter(t => {
+        if (t.status !== "COMPLETED" || !(t as any).completedAt) return false;
+        const completedDate = new Date((t as any).completedAt);
+        completedDate.setHours(0, 0, 0, 0);
+        return completedDate.getTime() >= weekAgo.getTime() && completedDate.getTime() < today.getTime();
+    });
+
+    // 履歴表示の切り替え
+    const [showWeekHistory, setShowWeekHistory] = useState(false);
+
     if (loading) {
         return (
             <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
@@ -416,6 +443,66 @@ export default function DashboardPage() {
                                 </div>
                             )}
                         </div>
+
+                        {/* 本日完了したタスク */}
+                        {completedToday.length > 0 && (
+                            <div className="mt-4 p-3 rounded-lg border border-green-500/30 bg-green-500/10">
+                                <div className="text-green-400 text-sm font-medium mb-2 flex items-center gap-2">
+                                    ✅ 本日完了したタスク ({completedToday.length}件)
+                                </div>
+                                <div className="flex flex-wrap gap-2">
+                                    {completedToday.map(task => (
+                                        <div
+                                            key={task.id}
+                                            onClick={(e) => handleTaskClick(task, e)}
+                                            className="px-3 py-2 rounded bg-green-500/20 border border-green-500/30 cursor-pointer hover:bg-green-500/30 transition-colors"
+                                        >
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-green-400">✓</span>
+                                                <span className="text-white text-sm">{task.title}</span>
+                                                <span className="text-green-400 text-xs">+{task.base_points}pt</span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* 週間履歴 */}
+                        {completedThisWeek.length > 0 && (
+                            <div className="mt-4">
+                                <button
+                                    onClick={() => setShowWeekHistory(!showWeekHistory)}
+                                    className="text-gray-400 text-sm hover:text-white transition-colors flex items-center gap-2"
+                                >
+                                    📊 今週の完了履歴を{showWeekHistory ? "隠す" : "表示"} ({completedThisWeek.length}件)
+                                    <span className="text-xs">{showWeekHistory ? "▲" : "▼"}</span>
+                                </button>
+                                {showWeekHistory && (
+                                    <div className="mt-2 p-3 rounded-lg border border-white/10 bg-white/5 space-y-2">
+                                        {completedThisWeek.map(task => {
+                                            const completedDate = new Date((task as any).completedAt);
+                                            return (
+                                                <div
+                                                    key={task.id}
+                                                    onClick={(e) => handleTaskClick(task, e)}
+                                                    className="flex items-center justify-between p-2 rounded bg-white/5 cursor-pointer hover:bg-white/10 transition-colors"
+                                                >
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-green-400">✓</span>
+                                                        <span className="text-white text-sm">{task.title}</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-2 text-xs text-gray-400">
+                                                        <span>{completedDate.toLocaleDateString("ja-JP", { month: "short", day: "numeric" })}</span>
+                                                        <span className="text-green-400">+{task.base_points}pt</span>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                            </div>
+                        )}
                     </CardContent>
                 </Card>
 

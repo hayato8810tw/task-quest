@@ -59,6 +59,7 @@ router.get('/', authMiddleware, async (req: Request, res: Response) => {
                 deadline: task.deadline,
                 status: task.status,
                 scheduled_day: (task as any).scheduledDay,
+                completedAt: task.completedAt,
                 tags: task.tags,
                 epicId: task.epicId,
                 epic: task.epic ? {
