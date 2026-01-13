@@ -295,50 +295,82 @@ export default function RewardsPage() {
                 )}
 
                 {/* 交換履歴タブ */}
-                {activeTab === "history" && (
-                    <Card className="bg-white/5 border-white/10 backdrop-blur">
-                        <CardHeader>
-                            <CardTitle className="text-white">交換履歴</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            {redemptions.length === 0 ? (
-                                <p className="text-gray-400 text-center py-8">
-                                    まだ報酬を交換していません
-                                </p>
-                            ) : (
-                                <div className="space-y-3">
-                                    {redemptions.map((redemption) => (
-                                        <div
-                                            key={redemption.id}
-                                            className="flex items-center justify-between p-4 rounded-lg bg-white/5 border border-white/10"
-                                        >
-                                            <div className="flex-1">
-                                                <h4 className="text-white font-medium">{redemption.reward_name}</h4>
-                                                <p className="text-gray-400 text-sm">
-                                                    {new Date(redemption.redeemed_at).toLocaleDateString("ja-JP", {
-                                                        year: "numeric",
-                                                        month: "long",
-                                                        day: "numeric",
-                                                        hour: "2-digit",
-                                                        minute: "2-digit",
-                                                    })}
-                                                </p>
+                {activeTab === "history" && (() => {
+                    // 同じ報酬をグループ化
+                    const groupedRedemptions = redemptions.reduce((acc, redemption) => {
+                        const key = `${redemption.reward_name}_${redemption.status}`;
+                        if (!acc[key]) {
+                            acc[key] = {
+                                ...redemption,
+                                count: 1,
+                                total_points: redemption.points_spent,
+                            };
+                        } else {
+                            acc[key].count += 1;
+                            acc[key].total_points += redemption.points_spent;
+                            // 最新の日付を使用
+                            if (new Date(redemption.redeemed_at) > new Date(acc[key].redeemed_at)) {
+                                acc[key].redeemed_at = redemption.redeemed_at;
+                            }
+                        }
+                        return acc;
+                    }, {} as Record<string, Redemption & { count: number; total_points: number }>);
+
+                    const groupedList = Object.values(groupedRedemptions);
+
+                    return (
+                        <Card className="bg-white/5 border-white/10 backdrop-blur">
+                            <CardHeader>
+                                <CardTitle className="text-white">交換履歴</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                {groupedList.length === 0 ? (
+                                    <p className="text-gray-400 text-center py-8">
+                                        まだ報酬を交換していません
+                                    </p>
+                                ) : (
+                                    <div className="space-y-3">
+                                        {groupedList.map((redemption, index) => (
+                                            <div
+                                                key={index}
+                                                className="flex items-center justify-between p-4 rounded-lg bg-white/5 border border-white/10"
+                                            >
+                                                <div className="flex-1">
+                                                    <h4 className="text-white font-medium flex items-center gap-2">
+                                                        {redemption.reward_name}
+                                                        {redemption.count > 1 && (
+                                                            <span className="px-2 py-0.5 text-xs bg-purple-500/30 text-purple-300 rounded-full">
+                                                                ×{redemption.count}
+                                                            </span>
+                                                        )}
+                                                    </h4>
+                                                    <p className="text-gray-400 text-sm">
+                                                        {redemption.count > 1 ? "最新: " : ""}
+                                                        {new Date(redemption.redeemed_at).toLocaleDateString("ja-JP", {
+                                                            year: "numeric",
+                                                            month: "long",
+                                                            day: "numeric",
+                                                            hour: "2-digit",
+                                                            minute: "2-digit",
+                                                        })}
+                                                    </p>
+                                                </div>
+                                                <div className="flex items-center gap-4">
+                                                    <span className="text-yellow-400 font-bold">
+                                                        -{redemption.total_points.toLocaleString()} pt
+                                                    </span>
+                                                    <Badge className={statusLabels[redemption.status]?.color || "bg-gray-500/20 text-gray-300"}>
+                                                        {statusLabels[redemption.status]?.label || redemption.status}
+                                                    </Badge>
+                                                </div>
                                             </div>
-                                            <div className="flex items-center gap-4">
-                                                <span className="text-yellow-400 font-bold">
-                                                    -{redemption.points_spent.toLocaleString()} pt
-                                                </span>
-                                                <Badge className={statusLabels[redemption.status]?.color || "bg-gray-500/20 text-gray-300"}>
-                                                    {statusLabels[redemption.status]?.label || redemption.status}
-                                                </Badge>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </CardContent>
-                    </Card>
-                )}
+                                        ))}
+                                    </div>
+                                )}
+                            </CardContent>
+                        </Card>
+                    );
+                })()}
             </main>
 
             {/* 交換確認ダイアログ */}
