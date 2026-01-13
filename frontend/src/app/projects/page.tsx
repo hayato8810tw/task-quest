@@ -103,6 +103,26 @@ export default function ProjectsPage() {
             "カスタマーサポート部",
         ];
 
+    // ユーザーのタスク一覧
+    interface UserTask {
+        id: string;
+        status: string;
+        epic?: { project?: { id: string } } | null;
+    }
+    const [userTasks, setUserTasks] = useState<UserTask[]>([]);
+    const [currentUserId, setCurrentUserId] = useState<string>("");
+
+    // ユーザーのタスクでプロジェクト別カウントを計算
+    const getMyTaskCounts = (projectId: string) => {
+        const projectTasks = userTasks.filter(t => t.epic?.project?.id === projectId);
+        return {
+            total: projectTasks.length,
+            pending: projectTasks.filter(t => t.status === "PENDING").length,
+            inProgress: projectTasks.filter(t => t.status === "IN_PROGRESS").length,
+            completed: projectTasks.filter(t => t.status === "COMPLETED").length,
+        };
+    };
+
     useEffect(() => {
         const token = localStorage.getItem("token");
         if (!token) {
@@ -114,16 +134,29 @@ export default function ProjectsPage() {
         if (userData) {
             const user = JSON.parse(userData);
             setUserRole(user.role || "");
+            setCurrentUserId(user.id || "");
         }
 
         const fetchData = async () => {
             try {
-                const projectsRes = await fetch(`${API_BASE_URL}/projects`, {
-                    headers: { Authorization: `Bearer ${token}` },
-                });
-                const projectsData = await projectsRes.json();
+                // プロジェクトとタスクを取得
+                const [projectsRes, tasksRes] = await Promise.all([
+                    fetch(`${API_BASE_URL}/projects`, {
+                        headers: { Authorization: `Bearer ${token}` },
+                    }),
+                    fetch(`${API_BASE_URL}/tasks`, {
+                        headers: { Authorization: `Bearer ${token}` },
+                    }),
+                ]);
+                const [projectsData, tasksData] = await Promise.all([
+                    projectsRes.json(),
+                    tasksRes.json(),
+                ]);
                 if (projectsData.success) {
                     setProjects(projectsData.data);
+                }
+                if (tasksData.success) {
+                    setUserTasks(tasksData.data);
                 }
 
                 const user = userData ? JSON.parse(userData) : null;
@@ -389,33 +422,48 @@ export default function ProjectsPage() {
                                             <p className="text-sm text-gray-400 mb-4 line-clamp-2">
                                                 {project.description || "説明なし"}
                                             </p>
-                                            <div className="mb-4">
-                                                <div className="flex justify-between text-sm text-gray-300 mb-1">
-                                                    <span>進捗</span>
-                                                    <span>{project.progress}%</span>
-                                                </div>
-                                                <Progress value={project.progress} className="h-2 bg-blue-900/50" indicatorClassName="bg-gradient-to-r from-blue-500 to-cyan-400" />
-                                            </div>
-                                            <div className="grid grid-cols-3 gap-2 text-center">
-                                                <div className="bg-white/5 rounded-lg p-2">
-                                                    <div className="text-lg font-bold text-purple-400">
-                                                        {project.epic_count}
-                                                    </div>
-                                                    <div className="text-xs text-gray-400">エピック</div>
-                                                </div>
-                                                <div className="bg-white/5 rounded-lg p-2">
-                                                    <div className="text-lg font-bold text-blue-400">
-                                                        {project.in_progress_tasks}
-                                                    </div>
-                                                    <div className="text-xs text-gray-400">進行中</div>
-                                                </div>
-                                                <div className="bg-white/5 rounded-lg p-2">
-                                                    <div className="text-lg font-bold text-green-400">
-                                                        {project.completed_tasks}/{project.total_tasks}
-                                                    </div>
-                                                    <div className="text-xs text-gray-400">完了</div>
-                                                </div>
-                                            </div>
+                                            {/* 自分の進捗表示 */}
+                                            {(() => {
+                                                const myCounts = getMyTaskCounts(project.id);
+                                                const myProgress = myCounts.total > 0 ? Math.round((myCounts.completed / myCounts.total) * 100) : 0;
+                                                return (
+                                                    <>
+                                                        <div className="mb-4">
+                                                            <div className="flex justify-between text-sm text-gray-300 mb-1">
+                                                                <span>あなたの進捗</span>
+                                                                <span>{myProgress}% ({myCounts.completed}/{myCounts.total}件)</span>
+                                                            </div>
+                                                            <Progress value={myProgress} className="h-2 bg-blue-900/50" indicatorClassName="bg-gradient-to-r from-blue-500 to-cyan-400" />
+                                                        </div>
+                                                        <div className="grid grid-cols-4 gap-2 text-center">
+                                                            <div className="bg-white/5 rounded-lg p-2">
+                                                                <div className="text-lg font-bold text-purple-400">
+                                                                    {project.epic_count}
+                                                                </div>
+                                                                <div className="text-xs text-gray-400">エピック</div>
+                                                            </div>
+                                                            <div className="bg-white/5 rounded-lg p-2">
+                                                                <div className="text-lg font-bold text-yellow-400">
+                                                                    {myCounts.pending}
+                                                                </div>
+                                                                <div className="text-xs text-gray-400">未着手</div>
+                                                            </div>
+                                                            <div className="bg-white/5 rounded-lg p-2">
+                                                                <div className="text-lg font-bold text-blue-400">
+                                                                    {myCounts.inProgress}
+                                                                </div>
+                                                                <div className="text-xs text-gray-400">進行中</div>
+                                                            </div>
+                                                            <div className="bg-white/5 rounded-lg p-2">
+                                                                <div className="text-lg font-bold text-green-400">
+                                                                    {myCounts.completed}
+                                                                </div>
+                                                                <div className="text-xs text-gray-400">完了</div>
+                                                            </div>
+                                                        </div>
+                                                    </>
+                                                );
+                                            })()}
                                             <div className="mt-3 text-xs text-gray-500">
                                                 作成者: {project.creator_name}
                                             </div>
