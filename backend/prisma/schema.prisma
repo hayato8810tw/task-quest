@@ -1,0 +1,238 @@
+// Prisma Schema for TaskQuest
+// 企業向けゲーミフィケーションタスク管理システム
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ユーザーテーブル
+model User {
+  id              String   @id @default(uuid())
+  employeeId      String   @unique @map("employee_id")
+  email           String   @unique
+  passwordHash    String?  @map("password_hash")
+  displayName     String?  @map("display_name")
+  avatarUrl       String?  @map("avatar_url")
+  department      String?
+  role            String   @default("USER")
+  level           Int      @default(1)
+  currentXp       Int      @default(0) @map("current_xp")
+  totalPoints     Int      @default(0) @map("total_points")
+  availablePoints Int      @default(0) @map("available_points")
+  loginStreak     Int      @default(0) @map("login_streak")
+  lastLoginDate   DateTime? @map("last_login_date")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  createdTasks      Task[]              @relation("TaskCreator")
+  createdProjects   Project[]           @relation("ProjectCreator")
+  createdEpics      Epic[]              @relation("EpicCreator")
+  taskAssignments   TaskAssignment[]
+  pointsHistory     PointsHistory[]
+  rewardsRedemption RewardsRedemption[]
+  userBadges        UserBadge[]
+  loginStreakRecord LoginStreak?
+
+  @@map("users")
+}
+
+// プロジェクトテーブル（大）
+model Project {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  status      String   @default("ACTIVE")
+  isArchived  Boolean  @default(false) @map("is_archived")
+  archivedAt  DateTime? @map("archived_at")
+  createdBy   String   @map("created_by")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  creator User   @relation("ProjectCreator", fields: [createdBy], references: [id])
+  epics   Epic[]
+
+  @@map("projects")
+}
+
+// エピックテーブル（中）
+model Epic {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  status      String   @default("ACTIVE")
+  isArchived  Boolean  @default(false) @map("is_archived")
+  archivedAt  DateTime? @map("archived_at")
+  projectId   String   @map("project_id")
+  createdBy   String   @map("created_by")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  creator User    @relation("EpicCreator", fields: [createdBy], references: [id])
+  tasks   Task[]
+
+  @@map("epics")
+}
+
+// タスクテーブル（小）
+model Task {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  createdBy   String   @map("created_by")
+  epicId      String?  @map("epic_id")
+  priority    String   @default("MEDIUM")
+  difficulty  Int      @default(3)
+  basePoints  Int      @default(100) @map("base_points")
+  bonusXp     Int      @default(50) @map("bonus_xp")
+  deadline    DateTime?
+  status      String   @default("PENDING")
+  tags        String   @default("[]")
+  isArchived  Boolean  @default(false) @map("is_archived")
+  archivedAt  DateTime? @map("archived_at")
+  completedAt DateTime? @map("completed_at")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  creator         User             @relation("TaskCreator", fields: [createdBy], references: [id])
+  epic            Epic?            @relation(fields: [epicId], references: [id])
+  taskAssignments TaskAssignment[]
+  pointsHistory   PointsHistory[]
+
+  @@map("tasks")
+}
+
+// タスク割り当てテーブル
+model TaskAssignment {
+  id         String   @id @default(uuid())
+  taskId     String   @map("task_id")
+  userId     String   @map("user_id")
+  assignedAt DateTime @default(now()) @map("assigned_at")
+
+  // Relations
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([taskId, userId])
+  @@map("task_assignments")
+}
+
+// ポイント履歴テーブル
+model PointsHistory {
+  id              String   @id @default(uuid())
+  userId          String   @map("user_id")
+  amount          Int
+  reason          String?
+  relatedTaskId   String?  @map("related_task_id")
+  relatedRewardId String?  @map("related_reward_id")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  // Relations
+  user   User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  task   Task? @relation(fields: [relatedTaskId], references: [id])
+
+  @@map("points_history")
+}
+
+// バッジマスタテーブル
+model Badge {
+  id             String   @id @default(uuid())
+  name           String
+  description    String?
+  iconUrl        String?  @map("icon_url")
+  conditionType  String?  @map("condition_type")
+  conditionValue Int?     @map("condition_value")
+  rewardPoints   Int      @default(0) @map("reward_points")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  // Relations
+  userBadges UserBadge[]
+
+  @@map("badges")
+}
+
+// ユーザーバッジ獲得テーブル
+model UserBadge {
+  id       String   @id @default(uuid())
+  userId   String   @map("user_id")
+  badgeId  String   @map("badge_id")
+  earnedAt DateTime @default(now()) @map("earned_at")
+
+  // Relations
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  badge Badge @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, badgeId])
+  @@map("user_badges")
+}
+
+// 報酬カタログテーブル
+model Reward {
+  id              String   @id @default(uuid())
+  name            String
+  description     String?
+  category        String?
+  pointsRequired  Int      @map("points_required")
+  stock           Int?
+  imageUrl        String?  @map("image_url")
+  isActive        Boolean  @default(true) @map("is_active")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  // Relations
+  redemptions RewardsRedemption[]
+
+  @@map("rewards")
+}
+
+// 報酬交換履歴テーブル
+model RewardsRedemption {
+  id             String    @id @default(uuid())
+  userId         String    @map("user_id")
+  rewardId       String    @map("reward_id")
+  pointsSpent    Int       @map("points_spent")
+  status         String    @default("PENDING")
+  redemptionCode String?   @map("redemption_code")
+  redeemedAt     DateTime  @default(now()) @map("redeemed_at")
+  deliveredAt    DateTime? @map("delivered_at")
+
+  // Relations
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reward Reward @relation(fields: [rewardId], references: [id])
+
+  @@map("rewards_redemption")
+}
+
+// ログインストリークテーブル
+model LoginStreak {
+  id            String    @id @default(uuid())
+  userId        String    @unique @map("user_id")
+  currentStreak Int       @default(0) @map("current_streak")
+  longestStreak Int       @default(0) @map("longest_streak")
+  lastLoginDate DateTime? @map("last_login_date")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("login_streaks")
+}
+
+// 部署テーブル
+model Department {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("departments")
+}
