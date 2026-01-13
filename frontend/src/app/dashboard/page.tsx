@@ -294,7 +294,7 @@ export default function DashboardPage() {
                                             >
                                                 {/* プロジェクト・エピック */}
                                                 {(task as any).epic && (
-                                                    <div className="text-[10px] text-gray-500 mb-1 truncate">
+                                                    <div className="text-[10px] text-purple-300/80 mb-1 truncate">
                                                         📁 {(task as any).epic.project?.title} / {(task as any).epic.title}
                                                     </div>
                                                 )}
@@ -336,7 +336,7 @@ export default function DashboardPage() {
                                                 }`}
                                         >
                                             {(task as any).epic && (
-                                                <div className="text-[10px] text-gray-500 mb-1">
+                                                <div className="text-[10px] text-purple-300/80 mb-1">
                                                     📁 {(task as any).epic.project?.title} / {(task as any).epic.title}
                                                 </div>
                                             )}
