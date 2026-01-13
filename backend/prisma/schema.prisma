@@ -58,6 +58,9 @@ model Project {
   creator User   @relation("ProjectCreator", fields: [createdBy], references: [id])
   epics   Epic[]
 
+  @@index([isArchived])
+  @@index([createdBy])
+  @@index([createdAt])
   @@map("projects")
 }
 
@@ -79,6 +82,9 @@ model Epic {
   creator User    @relation("EpicCreator", fields: [createdBy], references: [id])
   tasks   Task[]
 
+  @@index([projectId])
+  @@index([isArchived])
+  @@index([createdAt])
   @@map("epics")
 }
 
@@ -108,6 +114,11 @@ model Task {
   taskAssignments TaskAssignment[]
   pointsHistory   PointsHistory[]
 
+  @@index([epicId])
+  @@index([status])
+  @@index([isArchived])
+  @@index([createdAt])
+  @@index([priority])
   @@map("tasks")
 }
 
@@ -123,6 +134,8 @@ model TaskAssignment {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([taskId, userId])
+  @@index([userId])
+  @@index([taskId])
   @@map("task_assignments")
 }
 
@@ -140,6 +153,8 @@ model PointsHistory {
   user   User  @relation(fields: [userId], references: [id], onDelete: Cascade)
   task   Task? @relation(fields: [relatedTaskId], references: [id])
 
+  @@index([userId])
+  @@index([createdAt])
   @@map("points_history")
 }
 
