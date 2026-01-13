@@ -4,10 +4,19 @@
 
 タスク管理にゲームの要素を取り入れ、日々の業務を楽しく、達成感のあるものに変えるWebアプリケーションです。
 
-![Next.js](https://img.shields.io/badge/Next.js-14-black?style=flat-square&logo=next.js)
+![Next.js](https://img.shields.io/badge/Next.js-16-black?style=flat-square&logo=next.js)
 ![Express](https://img.shields.io/badge/Express-4-green?style=flat-square&logo=express)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?style=flat-square&logo=typescript)
-![SQLite](https://img.shields.io/badge/SQLite-3-003B57?style=flat-square&logo=sqlite)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791?style=flat-square&logo=postgresql)
+
+---
+
+## 🌐 本番環境
+
+| サービス | URL |
+|----------|-----|
+| **フロントエンド** | https://task-quest-six.vercel.app |
+| **バックエンドAPI** | https://taskquest-api.onrender.com |
 
 ---
 
@@ -18,7 +27,8 @@
 - 🎁 **報酬交換システム** - ポイントを報酬に交換
 - 🔥 **ログインストリーク** - 連続ログインでボーナス
 - 🏅 **バッジシステム** - 実績を解除してコレクション
-- 🤖 **AI推奨機能** - タスクに最適なポイント/XPを自動提案
+- 🤖 **AI推奨機能** - タスクに最適なポイント/XPを自動提案（Gemini 2.5 Flash）
+- ✏️ **編集機能** - プロジェクト・エピック・タスクを作成後に編集可能
 
 ---
 
@@ -33,7 +43,7 @@
 
 ```bash
 # リポジトリをクローン
-git clone <repository-url>
+git clone https://github.com/hayato8810tw/task-quest.git
 cd task-quest
 
 # バックエンドセットアップ
@@ -41,7 +51,7 @@ cd backend
 npm install
 cp .env.example .env  # 環境変数を設定
 npx prisma migrate dev
-npx prisma db seed  # 初期データを投入（任意）
+npx prisma db seed  # 初期データを投入
 npm run dev
 
 # フロントエンドセットアップ（別ターミナル）
@@ -50,7 +60,7 @@ npm install
 npm run dev
 ```
 
-### アクセス
+### ローカルアクセス
 
 - **フロントエンド**: http://localhost:3000
 - **バックエンドAPI**: http://localhost:3001
@@ -61,7 +71,7 @@ npm run dev
 
 ### 1️⃣ ユーザー登録・ログイン
 
-1. http://localhost:3000 にアクセス
+1. アプリにアクセス
 2. 「新規登録」をクリック
 3. 社員ID、メールアドレス、パスワード、表示名を入力
 4. 登録後、自動的にダッシュボードへ
@@ -105,6 +115,8 @@ npm run dev
 4. 所属先（プロジェクト・エピック）を選択または新規作成
 5. 「タスクを作成」をクリック
 
+> 💡 **自動選択**: プロジェクト詳細ページから「+ タスクを追加」をクリックすると、プロジェクトとエピックが自動的に選択されます。
+
 #### タスクの進め方
 
 ```
@@ -112,6 +124,14 @@ npm run dev
 ```
 
 完了すると設定されたポイントとXPを獲得！
+
+#### タスク・エピック・プロジェクトの編集
+
+プロジェクト詳細ページで、各項目の横にある ✏️ ボタンをクリックすると編集モーダルが開きます。
+
+- **プロジェクト**: タイトル・説明の編集
+- **エピック**: タイトル・説明の編集
+- **タスク**: タイトル・説明・優先度・難易度・ポイント・XPの編集
 
 ### 4️⃣ プロジェクト管理
 
@@ -132,7 +152,7 @@ npm run dev
 
 - エピック・タスクを階層表示
 - その場でタスクのステータス変更可能
-- エピック・タスクの追加
+- エピック・タスクの追加・編集
 
 ### 5️⃣ ランキング（/leaderboard）
 
@@ -182,7 +202,7 @@ npm run dev
 | ロール | できること |
 |--------|------------|
 | **USER** | タスク閲覧・実行、報酬交換、プロフィール編集 |
-| **MANAGER** | + プロジェクト・エピック・タスク作成、チーム管理 |
+| **MANAGER** | + プロジェクト・エピック・タスク作成・編集、チーム管理 |
 | **ADMIN** | + ユーザー管理、報酬管理、全機能アクセス |
 
 ---
@@ -192,16 +212,22 @@ npm run dev
 ### バックエンド（backend/.env）
 
 ```env
-DATABASE_URL="file:./dev.db"
+DATABASE_URL="postgresql://..."  # PostgreSQL接続URL
 JWT_SECRET="your-super-secret-key"
 GEMINI_API_KEY="your-gemini-api-key"  # AI機能用
+```
+
+### フロントエンド（Vercel）
+
+```env
+NEXT_PUBLIC_API_URL="https://taskquest-api.onrender.com"
 ```
 
 ### Gemini API キーの取得
 
 1. [Google AI Studio](https://aistudio.google.com/app/apikey) にアクセス
 2. 「Create API key」でキーを作成
-3. `.env`の`GEMINI_API_KEY`に設定
+3. Renderの環境変数 `GEMINI_API_KEY` に設定
 
 ---
 
@@ -227,6 +253,7 @@ task-quest/
 │   └── package.json
 │
 ├── SPECIFICATION.md       # 詳細仕様書
+├── DEPLOYMENT.md          # デプロイ手順書
 └── README.md              # このファイル
 ```
 
@@ -276,8 +303,9 @@ npm run lint
 | カテゴリ | 主なエンドポイント |
 |----------|-------------------|
 | 認証 | POST /api/auth/login, /register |
-| タスク | GET/POST /api/tasks, PATCH /status |
-| プロジェクト | GET/POST /api/projects |
+| タスク | GET/POST/PATCH /api/tasks |
+| プロジェクト | GET/POST/PATCH /api/projects |
+| エピック | GET/POST/PATCH /api/epics |
 | ログインボーナス | POST /api/login-bonus/claim |
 | ランキング | GET /api/leaderboard?period=xxx |
 | 報酬 | GET/POST /api/rewards, /redeem |
@@ -285,19 +313,16 @@ npm run lint
 
 ---
 
-## 🎨 スクリーンショット
+## 🚀 デプロイ
 
-（スクリーンショットをここに追加）
+詳細は [DEPLOYMENT.md](./DEPLOYMENT.md) を参照。
 
----
+### 使用サービス
 
-## 🤝 コントリビューション
-
-1. このリポジトリをフォーク
-2. フィーチャーブランチを作成 (`git checkout -b feature/amazing-feature`)
-3. 変更をコミット (`git commit -m 'Add amazing feature'`)
-4. ブランチにプッシュ (`git push origin feature/amazing-feature`)
-5. プルリクエストを作成
+| サービス | 用途 | プラン |
+|----------|------|--------|
+| Vercel | フロントエンド | Hobby（無料） |
+| Render | バックエンド + PostgreSQL | Free |
 
 ---
 

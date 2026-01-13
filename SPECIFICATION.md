@@ -1,7 +1,7 @@
 # TaskQuest 仕様書
 
-**バージョン**: 1.0.0  
-**更新日**: 2026年1月11日  
+**バージョン**: 1.1.0  
+**更新日**: 2026年1月13日  
 **ドキュメント種別**: システム仕様書
 
 ---
@@ -14,24 +14,34 @@
 ### 1.2 目的
 従業員のタスク管理にゲーミフィケーション要素を導入し、業務効率とモチベーションを向上させる。
 
-### 1.3 主要機能
+### 1.3 本番環境URL
+
+| サービス | URL |
+|----------|-----|
+| **フロントエンド** | https://task-quest-six.vercel.app |
+| **バックエンドAPI** | https://taskquest-api.onrender.com |
+
+### 1.4 主要機能
 - タスク・プロジェクト・エピックの階層管理
+- プロジェクト・エピック・タスクの編集機能
 - ポイント・XP・レベルシステム
 - ログインボーナス・ストリーク機能
 - ランキング（デイリー/ウィークリー/マンスリー/年間/累計）
 - 報酬交換システム
 - バッジ・実績システム
 - アーカイブ機能
+- AI推奨値計算（Gemini API）
 
-### 1.4 技術スタック
+### 1.5 技術スタック
 
 | 項目 | 技術 |
 |------|------|
-| **フロントエンド** | Next.js 14, React, TypeScript, Tailwind CSS |
+| **フロントエンド** | Next.js 16, React, TypeScript, Tailwind CSS, Shadcn UI |
 | **バックエンド** | Express.js, TypeScript, Node.js |
-| **データベース** | SQLite (Prisma ORM) |
+| **データベース** | PostgreSQL (Prisma ORM) |
 | **認証** | JWT (JSON Web Token) |
 | **AI機能** | Google Gemini API (gemini-2.5-flash) |
+| **ホスティング** | Vercel (フロントエンド), Render (バックエンド + DB) |
 
 ---
 
@@ -64,8 +74,8 @@
 ### 2.3 レベルシステム
 
 ```
-レベルアップ必要XP = レベル × 100
-例: レベル5→6 に必要なXP = 500
+レベルアップ必要XP = Floor(100 × レベル^1.5)
+例: レベル5→6 に必要なXP ≈ 1,118
 ```
 
 ---
@@ -94,6 +104,7 @@
 | status | Enum | PENDING / IN_PROGRESS / COMPLETED |
 | deadline | DateTime | 期限 |
 | epicId | UUID | 所属エピックID（任意） |
+| isArchived | Boolean | アーカイブ済みフラグ |
 
 ### 3.3 ステータス遷移
 
@@ -101,9 +112,23 @@
 PENDING（未着手）→ IN_PROGRESS（進行中）→ COMPLETED（完了）
 ```
 
-### 3.4 AI推奨値計算
+### 3.4 編集機能
 
-タスク作成時にGemini APIを使用して、タスク内容に基づいた適切なポイント・XP推奨値を自動計算。
+プロジェクト詳細ページ（/projects/[id]）から以下を編集可能：
+
+| 対象 | 編集可能フィールド |
+|------|-------------------|
+| **プロジェクト** | title, description |
+| **エピック** | title, description |
+| **タスク** | title, description, priority, difficulty, basePoints, bonusXp |
+
+### 3.5 タスク作成時の自動選択
+
+プロジェクト詳細ページから「+ タスクを追加」をクリックすると、タスク作成画面でプロジェクトとエピックが自動的に選択される。
+
+### 3.6 AI推奨値計算
+
+タスク作成時にGemini API（gemini-2.5-flash）を使用して、タスク内容に基づいた適切なポイント・XP推奨値を自動計算。
 
 **考慮要素**:
 - タスクタイトル・説明
@@ -242,9 +267,11 @@ xp = streak * 5 + 10;       // 例: 5日連続 = 35XP
 | GET | /api/tasks | タスク一覧取得 |
 | POST | /api/tasks | タスク作成 |
 | GET | /api/tasks/:id | タスク詳細取得 |
-| PUT | /api/tasks/:id | タスク更新 |
+| PATCH | /api/tasks/:id | タスク更新（全般） |
 | PATCH | /api/tasks/:id/status | ステータス変更 |
-| DELETE | /api/tasks/:id | タスク削除 |
+| PATCH | /api/tasks/:id/epic | エピック変更 |
+| POST | /api/tasks/:id/complete | タスク完了 |
+| POST | /api/tasks/:id/reset | タスクリセット |
 
 ### 10.3 プロジェクト API
 
@@ -253,6 +280,7 @@ xp = streak * 5 + 10;       // 例: 5日連続 = 35XP
 | GET | /api/projects | プロジェクト一覧 |
 | POST | /api/projects | プロジェクト作成 |
 | GET | /api/projects/:id | プロジェクト詳細 |
+| PATCH | /api/projects/:id | プロジェクト更新 |
 
 ### 10.4 エピック API
 
@@ -260,6 +288,8 @@ xp = streak * 5 + 10;       // 例: 5日連続 = 35XP
 |----------|------|------|
 | GET | /api/epics | エピック一覧 |
 | POST | /api/epics | エピック作成 |
+| GET | /api/epics/:id | エピック詳細 |
+| PATCH | /api/epics/:id | エピック更新 |
 
 ### 10.5 ログインボーナス API
 
@@ -280,8 +310,8 @@ xp = streak * 5 + 10;       // 例: 5日連続 = 35XP
 |----------|------|------|
 | GET | /api/rewards | 報酬一覧 |
 | POST | /api/rewards | 報酬作成 |
-| POST | /api/rewards/:id/redeem | 報酬交換 |
-| GET | /api/rewards/history | 交換履歴 |
+| POST | /api/rewards/redeem | 報酬交換 |
+| GET | /api/rewards/redemptions | 交換履歴 |
 
 ### 10.8 アーカイブ API
 
@@ -304,19 +334,24 @@ xp = streak * 5 + 10;       // 例: 5日連続 = 35XP
 
 | パス | ページ名 | 説明 |
 |------|----------|------|
-| / | ランディング | ログイン前のトップページ |
+| / | ルート | ダッシュボードまたはログインへリダイレクト |
 | /login | ログイン | ログインフォーム |
 | /register | 登録 | ユーザー登録フォーム |
 | /dashboard | ダッシュボード | メインダッシュボード |
 | /tasks | タスク一覧 | 全タスク一覧（グリッド表示） |
-| /tasks/new | タスク作成 | 新規タスク作成フォーム |
+| /tasks/new | タスク作成 | 新規タスク作成フォーム（自動選択対応） |
 | /projects | プロジェクト | プロジェクト一覧・チーム管理 |
-| /projects/[id] | プロジェクト詳細 | エピック・タスク階層表示 |
+| /projects/[id] | プロジェクト詳細 | エピック・タスク階層表示・編集機能 |
+| /projects/new | プロジェクト作成 | 新規プロジェクト作成 |
+| /epics/new | エピック作成 | 新規エピック作成（自動選択対応） |
 | /leaderboard | ランキング | 期間別ランキング表示 |
 | /rewards | 報酬 | 報酬カタログ・交換 |
+| /rewards/admin | 報酬管理 | 報酬の追加・編集（管理者用） |
+| /rewards/requests | 交換申請管理 | 交換申請の承認・却下 |
 | /badges | バッジ | 獲得バッジ一覧 |
 | /profile | プロフィール | ユーザー情報編集 |
 | /archives | アーカイブ | アーカイブ済みアイテム管理 |
+| /team | チーム | チームメンバー管理 |
 
 ---
 
@@ -346,6 +381,9 @@ xp = streak * 5 + 10;       // 例: 5日連続 = 35XP
 
 ### 12.3 ソート順序
 タスク一覧はステータス順（進行中→未着手→完了済み）をデフォルト。
+
+### 12.4 編集UI
+各項目の横に ✏️ アイコンを配置。クリックでモーダル表示。
 
 ---
 
@@ -377,36 +415,59 @@ xp = streak * 5 + 10;       // 例: 5日連続 = 35XP
 - トークン有効期限: 7日間
 
 ### 14.2 パスワード
-- bcrypt によるハッシュ化
+- bcrypt によるハッシュ化（salt rounds: 12）
 
 ### 14.3 API保護
 - authMiddleware による全APIエンドポイント保護
 - ロールベースのアクセス制御
 
+### 14.4 CORS
+- 本番環境では全オリジン許可（`origin: true`）
+
 ---
 
 ## 15. 環境変数
 
+### バックエンド（Render）
+
 | 変数名 | 説明 |
 |--------|------|
-| DATABASE_URL | SQLiteデータベースパス |
+| DATABASE_URL | PostgreSQL接続URL |
 | JWT_SECRET | JWT署名用シークレット |
 | GEMINI_API_KEY | Google Gemini API キー |
+| PORT | サーバーポート（デフォルト: 3001） |
+
+### フロントエンド（Vercel）
+
+| 変数名 | 説明 |
+|--------|------|
+| NEXT_PUBLIC_API_URL | バックエンドAPIのURL |
 
 ---
 
-## 16. 起動方法
+## 16. デプロイ構成
 
-### 16.1 バックエンド
+| サービス | 用途 | プラットフォーム |
+|----------|------|-----------------|
+| Vercel | フロントエンド | https://task-quest-six.vercel.app |
+| Render | バックエンドAPI | https://taskquest-api.onrender.com |
+| Render | PostgreSQL DB | 内部接続 |
+
+---
+
+## 17. 起動方法
+
+### 17.1 バックエンド
 ```bash
 cd backend
 npm install
 npx prisma migrate dev
+npx prisma db seed
 npm run dev
 ```
 ポート: 3001
 
-### 16.2 フロントエンド
+### 17.2 フロントエンド
 ```bash
 cd frontend
 npm install
@@ -416,7 +477,7 @@ npm run dev
 
 ---
 
-## 17. 将来の拡張候補
+## 18. 将来の拡張候補
 
 - [ ] 通知機能（期限アラート、メンション）
 - [ ] チームチャット機能
@@ -429,4 +490,4 @@ npm run dev
 
 ---
 
-*本仕様書は TaskQuest v1.0.0 の機能を網羅しています。*
+*本仕様書は TaskQuest v1.1.0 の機能を網羅しています。*

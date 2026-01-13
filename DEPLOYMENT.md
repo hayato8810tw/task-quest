@@ -5,12 +5,23 @@ Vercel（フロントエンド）+ Render（バックエンド + PostgreSQL）�
 
 ---
 
+## 本番環境URL
+
+| サービス | URL |
+|----------|-----|
+| **フロントエンド** | https://task-quest-six.vercel.app |
+| **バックエンドAPI** | https://taskquest-api.onrender.com |
+| **API ヘルスチェック** | https://taskquest-api.onrender.com/api/health |
+
+---
+
 ## 事前準備
 
 ### 必要なアカウント
 - [GitHub](https://github.com) アカウント
 - [Vercel](https://vercel.com) アカウント（GitHub連携）
 - [Render](https://render.com) アカウント（GitHub連携）
+- [Google AI Studio](https://aistudio.google.com) アカウント（Gemini API用）
 
 ### リポジトリ準備
 1. GitHubにリポジトリを作成
@@ -34,7 +45,7 @@ git push -u origin main
 2. **New** → **PostgreSQL** をクリック
 3. 以下を設定:
    - **Name**: `taskquest-db`
-   - **Region**: Oregon (US West)
+   - **Region**: Oregon (US West) または Singapore
    - **Plan**: Free
 4. **Create Database** をクリック
 5. 作成後、**Internal Database URL** をコピー
@@ -45,14 +56,16 @@ git push -u origin main
 2. GitHubリポジトリ `task-quest` を選択
 3. 以下を設定:
    - **Name**: `taskquest-api`
-   - **Region**: Oregon (US West)
+   - **Region**: Oregon (US West) または Singapore
    - **Root Directory**: `backend`
    - **Environment**: Node
-   - **Build Command**: `npm install && npx prisma generate && npx prisma migrate deploy`
+   - **Build Command**: `npm install && npx prisma generate && npx prisma migrate deploy && npm run db:seed`
    - **Start Command**: `npm run build && npm start`
    - **Plan**: Free
 
 4. **Create Web Service** をクリック
+
+> ⚠️ Build Commandに `npm run db:seed` を含めると、デプロイ時にデモユーザーが自動作成されます。
 
 ### 3. 環境変数設定
 
@@ -63,8 +76,7 @@ Web Serviceの **Environment** タブで以下を設定:
 | `DATABASE_URL` | Step 1でコピーしたInternal Database URL |
 | `JWT_SECRET` | 強力なランダム文字列（32文字以上推奨） |
 | `GEMINI_API_KEY` | Google AI StudioのAPIキー |
-| `FRONTEND_URL` | `https://[your-project].vercel.app`（後で設定） |
-| `NODE_ENV` | `production` |
+| `PORT` | `3001`（または任意） |
 
 ### 4. デプロイ確認
 
@@ -96,34 +108,69 @@ Web Serviceの **Environment** タブで以下を設定:
 
 **Deploy** をクリックして完了を待つ
 
-### 4. Render側のFRONTEND_URLを更新
+---
 
-Vercelで発行されたURL（例: `https://taskquest.vercel.app`）を Render の `FRONTEND_URL` 環境変数に設定
+## デモユーザー
+
+デプロイ後、以下のデモアカウントでログイン可能:
+
+| 社員ID | パスワード | 役割 |
+|--------|----------|------|
+| `EMP001` | `password123` | USER |
+| `MGR001` | `password123` | MANAGER |
+| `ADMIN001` | `password123` | ADMIN |
 
 ---
 
 ## 動作確認
 
 1. Vercelのフロントエンドにアクセス
-2. ユーザー登録してログイン
+2. デモユーザーまたは新規登録してログイン
 3. タスク作成・完了を試す
 4. ランキング・報酬が動作することを確認
+5. AI推奨値機能をテスト（タスク作成時）
+
+---
+
+## 更新・再デプロイ
+
+### 自動デプロイ
+GitHubにプッシュすると、VercelとRenderの両方が自動的に再デプロイされます。
+
+```bash
+git add .
+git commit -m "Update feature"
+git push
+```
+
+### 手動デプロイ
+- **Vercel**: ダッシュボードから "Redeploy" ボタン
+- **Render**: ダッシュボードから "Manual Deploy" ボタン
 
 ---
 
 ## トラブルシューティング
 
 ### CORS エラー
-- Render の `FRONTEND_URL` が正しく設定されているか確認
-- Vercel のデプロイ後に Render を再デプロイ
+- バックエンドの `src/index.ts` で CORS が `origin: true` になっているか確認
+- Renderを再デプロイ
 
 ### データベース接続エラー
 - `DATABASE_URL` が Internal URL であることを確認（External URLではない）
 - Prisma migrate が成功しているかログを確認
 
-### 認証エラー
-- `JWT_SECRET` が設定されているか確認
-- フロントエンドの `NEXT_PUBLIC_API_URL` が正しいか確認
+### 認証エラー（Invalid credentials）
+- データベースにユーザーが存在するか確認
+- Build Commandに `npm run db:seed` が含まれているか確認
+- Renderを再デプロイ
+
+### API Not Found エラー
+- `NEXT_PUBLIC_API_URL` が正しく設定されているか確認
+- フロントエンドで `/api/api/...` のような重複パスになっていないか確認
+
+### AI推奨値エラー
+- Renderの環境変数 `GEMINI_API_KEY` が正しく設定されているか確認
+- Google AI StudioでAPIキーが有効か確認
 
 ---
 
@@ -140,6 +187,11 @@ Vercelで発行されたURL（例: `https://taskquest.vercel.app`）を Render �
 
 ---
 
-**デプロイ完了後のURL例**:
-- フロントエンド: `https://taskquest.vercel.app`
-- バックエンドAPI: `https://taskquest-api.onrender.com`
+## 現在のデプロイ情報
+
+| 項目 | 値 |
+|------|-----|
+| フロントエンド | https://task-quest-six.vercel.app |
+| バックエンドAPI | https://taskquest-api.onrender.com |
+| GitHubリポジトリ | https://github.com/hayato8810tw/task-quest |
+| Render Service ID | srv-d5ir7t6r433s738n150g |
