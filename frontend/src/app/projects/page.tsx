@@ -351,7 +351,7 @@ export default function ProjectsPage() {
                                     <CardContent>
                                         <div className="grid grid-cols-4 gap-2 text-center mb-3">
                                             <div className="bg-white/10 rounded-lg p-2">
-                                                <div className="text-2xl font-bold text-white">{stats.total_tasks}</div>
+                                                <div className="text-2xl font-bold text-white">{stats.tasks_pending + stats.tasks_in_progress + stats.tasks_completed}</div>
                                                 <div className="text-xs text-gray-400">全体</div>
                                             </div>
                                             <div className="bg-white/10 rounded-lg p-2">
@@ -369,9 +369,9 @@ export default function ProjectsPage() {
                                         </div>
                                         <div className="flex justify-between text-sm text-gray-300 mb-1">
                                             <span>進捗（{stats.member_count}人）</span>
-                                            <span>{stats.total_tasks > 0 ? Math.round((stats.tasks_completed / stats.total_tasks) * 100) : 0}%</span>
+                                            <span>{(stats.tasks_pending + stats.tasks_in_progress + stats.tasks_completed) > 0 ? Math.round((stats.tasks_completed / (stats.tasks_pending + stats.tasks_in_progress + stats.tasks_completed)) * 100) : 0}%</span>
                                         </div>
-                                        <Progress value={stats.total_tasks > 0 ? Math.round((stats.tasks_completed / stats.total_tasks) * 100) : 0} className="h-2 bg-blue-900/50" indicatorClassName="bg-gradient-to-r from-blue-500 to-cyan-400" />
+                                        <Progress value={(stats.tasks_pending + stats.tasks_in_progress + stats.tasks_completed) > 0 ? Math.round((stats.tasks_completed / (stats.tasks_pending + stats.tasks_in_progress + stats.tasks_completed)) * 100) : 0} className="h-2 bg-blue-900/50" indicatorClassName="bg-gradient-to-r from-blue-500 to-cyan-400" />
                                     </CardContent>
                                 </Card>
                             ) : (
