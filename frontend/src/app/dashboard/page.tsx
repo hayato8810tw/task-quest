@@ -292,8 +292,14 @@ export default function DashboardPage() {
                                                 className={`p-2 rounded bg-white/10 border border-white/20 cursor-move hover:bg-white/20 transition-colors ${draggedTask === task.id ? "opacity-50" : ""
                                                     }`}
                                             >
+                                                {/* プロジェクト・エピック */}
+                                                {(task as any).epic && (
+                                                    <div className="text-[10px] text-gray-500 mb-1 truncate">
+                                                        📁 {(task as any).epic.project?.title} / {(task as any).epic.title}
+                                                    </div>
+                                                )}
                                                 <div className="flex items-center gap-1 mb-1">
-                                                    <div className={`w-2 h-2 rounded-full ${statusColors[task.status]}`} />
+                                                    <div className={`w-2 h-2 rounded-full flex-shrink-0 ${statusColors[task.status]}`} />
                                                     <span className="text-white text-sm font-medium truncate">
                                                         {task.title}
                                                     </span>
@@ -325,6 +331,11 @@ export default function DashboardPage() {
                                             className={`px-3 py-2 rounded bg-white/10 border border-white/20 cursor-move hover:bg-white/20 transition-colors ${draggedTask === task.id ? "opacity-50" : ""
                                                 }`}
                                         >
+                                            {(task as any).epic && (
+                                                <div className="text-[10px] text-gray-500 mb-1">
+                                                    📁 {(task as any).epic.project?.title} / {(task as any).epic.title}
+                                                </div>
+                                            )}
                                             <div className="flex items-center gap-2">
                                                 <Badge className={priorityColors[task.priority] + " text-xs"}>
                                                     {priorityLabels[task.priority]}

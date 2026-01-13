@@ -28,6 +28,13 @@ router.get('/', authMiddleware, async (req: Request, res: Response) => {
                 creator: {
                     select: { id: true, displayName: true }
                 },
+                epic: {
+                    include: {
+                        project: {
+                            select: { id: true, title: true }
+                        }
+                    }
+                },
                 taskAssignments: {
                     include: {
                         user: { select: { id: true, displayName: true } }
@@ -54,6 +61,14 @@ router.get('/', authMiddleware, async (req: Request, res: Response) => {
                 scheduled_day: (task as any).scheduledDay,
                 tags: task.tags,
                 epicId: task.epicId,
+                epic: task.epic ? {
+                    id: task.epic.id,
+                    title: task.epic.title,
+                    project: task.epic.project ? {
+                        id: task.epic.project.id,
+                        title: task.epic.project.title
+                    } : null
+                } : null,
                 created_by: task.creator,
                 assigned_to: task.taskAssignments.map(ta => ta.user)
             }))
