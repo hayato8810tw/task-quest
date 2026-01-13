@@ -218,13 +218,20 @@ export default function DashboardPage() {
         COMPLETED: "bg-green-500",
     };
 
-    // 曜日ごとにタスクをグループ化
+    // ステータスソート順（進行中 > 未着手 > 完了）
+    const statusOrder: Record<string, number> = { IN_PROGRESS: 0, PENDING: 1, COMPLETED: 2 };
+
+    // 曜日ごとにタスクをグループ化（ステータス順でソート）
     const getTasksByDay = (day: string) => {
-        return tasks.filter(t => (t as any).scheduled_day === day && t.status !== "COMPLETED");
+        return tasks
+            .filter(t => (t as any).scheduled_day === day && t.status !== "COMPLETED")
+            .sort((a, b) => (statusOrder[a.status] ?? 99) - (statusOrder[b.status] ?? 99));
     };
 
-    // 未割り当てタスク
-    const unscheduledTasks = tasks.filter(t => !(t as any).scheduled_day && t.status !== "COMPLETED");
+    // 未割り当てタスク（ステータス順でソート）
+    const unscheduledTasks = tasks
+        .filter(t => !(t as any).scheduled_day && t.status !== "COMPLETED")
+        .sort((a, b) => (statusOrder[a.status] ?? 99) - (statusOrder[b.status] ?? 99));
 
     if (loading) {
         return (
