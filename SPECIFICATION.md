@@ -102,6 +102,7 @@
 | basePoints | Int | 完了時獲得ポイント |
 | bonusXp | Int | 完了時獲得XP |
 | status | Enum | PENDING / IN_PROGRESS / COMPLETED |
+| scheduledDay | String | 予定曜日（MONDAY〜FRIDAY、null=未設定） |
 | deadline | DateTime | 期限 |
 | epicId | UUID | 所属エピックID（任意） |
 | isArchived | Boolean | アーカイブ済みフラグ |
@@ -112,7 +113,18 @@
 PENDING（未着手）→ IN_PROGRESS（進行中）→ COMPLETED（完了）
 ```
 
-### 3.4 編集機能
+### 3.4 週間プランナー
+
+ダッシュボードで曜日ごとにタスクを整理可能。
+
+| 機能 | 説明 |
+|------|------|
+| **曜日カラム** | 月〜金の5つのカラムでタスクを表示 |
+| **ドラッグ＆ドロップ** | タスクを曜日間で移動 |
+| **曜日解除** | 「未割り当てタスク」エリアにドロップで解除 |
+| **プロジェクト表示** | 各タスクにプロジェクト名・エピック名を表示 |
+
+### 3.5 編集機能
 
 プロジェクト詳細ページ（/projects/[id]）から以下を編集可能：
 
@@ -122,11 +134,11 @@ PENDING（未着手）→ IN_PROGRESS（進行中）→ COMPLETED（完了）
 | **エピック** | title, description |
 | **タスク** | title, description, priority, difficulty, basePoints, bonusXp |
 
-### 3.5 タスク作成時の自動選択
+### 3.6 タスク作成時の自動選択
 
 プロジェクト詳細ページから「+ タスクを追加」をクリックすると、タスク作成画面でプロジェクトとエピックが自動的に選択される。
 
-### 3.6 AI推奨値計算
+### 3.7 AI推奨値計算
 
 タスク作成時にGemini API（gemini-2.5-flash）を使用して、タスク内容に基づいた適切なポイント・XP推奨値を自動計算。
 
