@@ -90,23 +90,24 @@ model Epic {
 
 // タスクテーブル（小）
 model Task {
-  id          String   @id @default(uuid())
-  title       String
-  description String?
-  createdBy   String   @map("created_by")
-  epicId      String?  @map("epic_id")
-  priority    String   @default("MEDIUM")
-  difficulty  Int      @default(3)
-  basePoints  Int      @default(100) @map("base_points")
-  bonusXp     Int      @default(50) @map("bonus_xp")
-  deadline    DateTime?
-  status      String   @default("PENDING")
-  tags        String   @default("[]")
-  isArchived  Boolean  @default(false) @map("is_archived")
-  archivedAt  DateTime? @map("archived_at")
-  completedAt DateTime? @map("completed_at")
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  id           String    @id @default(uuid())
+  title        String
+  description  String?
+  createdBy    String    @map("created_by")
+  epicId       String?   @map("epic_id")
+  priority     String    @default("MEDIUM")
+  difficulty   Int       @default(3)
+  basePoints   Int       @default(100) @map("base_points")
+  bonusXp      Int       @default(50) @map("bonus_xp")
+  deadline     DateTime?
+  status       String    @default("PENDING")
+  scheduledDay String?   @map("scheduled_day") // 予定曜日: MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY
+  tags         String    @default("[]")
+  isArchived   Boolean   @default(false) @map("is_archived")
+  archivedAt   DateTime? @map("archived_at")
+  completedAt  DateTime? @map("completed_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
 
   // Relations
   creator         User             @relation("TaskCreator", fields: [createdBy], references: [id])
@@ -119,6 +120,7 @@ model Task {
   @@index([isArchived])
   @@index([createdAt])
   @@index([priority])
+  @@index([scheduledDay])
   @@map("tasks")
 }
 

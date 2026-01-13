@@ -51,6 +51,7 @@ router.get('/', authMiddleware, async (req: Request, res: Response) => {
                 bonus_xp: task.bonusXp,
                 deadline: task.deadline,
                 status: task.status,
+                scheduled_day: (task as any).scheduledDay,
                 tags: task.tags,
                 epicId: task.epicId,
                 created_by: task.creator,
@@ -323,7 +324,7 @@ router.post('/:id/complete', authMiddleware, async (req: Request, res: Response)
 router.patch('/:id', authMiddleware, async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
-        const { title, description, priority, difficulty, base_points, bonus_xp, deadline } = req.body;
+        const { title, description, priority, difficulty, base_points, bonus_xp, deadline, scheduled_day } = req.body;
 
         const task = await prisma.task.findUnique({
             where: { id }
@@ -336,6 +337,15 @@ router.patch('/:id', authMiddleware, async (req: Request, res: Response) => {
             });
         }
 
+        // scheduled_day のバリデーション
+        const validDays = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY', null, ''];
+        if (scheduled_day !== undefined && !validDays.includes(scheduled_day)) {
+            return res.status(400).json({
+                success: false,
+                error: 'Invalid scheduled_day'
+            });
+        }
+
         const updatedTask = await prisma.task.update({
             where: { id },
             data: {
@@ -345,7 +355,8 @@ router.patch('/:id', authMiddleware, async (req: Request, res: Response) => {
                 ...(difficulty !== undefined && { difficulty: Number(difficulty) }),
                 ...(base_points !== undefined && { basePoints: Number(base_points) }),
                 ...(bonus_xp !== undefined && { bonusXp: Number(bonus_xp) }),
-                ...(deadline !== undefined && { deadline: deadline ? new Date(deadline) : null })
+                ...(deadline !== undefined && { deadline: deadline ? new Date(deadline) : null }),
+                ...(scheduled_day !== undefined && { scheduledDay: scheduled_day || null })
             },
             include: {
                 creator: { select: { id: true, displayName: true } },
@@ -366,7 +377,8 @@ router.patch('/:id', authMiddleware, async (req: Request, res: Response) => {
                 base_points: updatedTask.basePoints,
                 bonus_xp: updatedTask.bonusXp,
                 deadline: updatedTask.deadline,
-                status: updatedTask.status
+                status: updatedTask.status,
+                scheduled_day: (updatedTask as any).scheduledDay
             }
         });
     } catch (error) {

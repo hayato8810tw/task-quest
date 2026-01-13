@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, DragEvent } from "react";
 import { useRouter } from "next/navigation";
 import { Navbar } from "@/components/Navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,6 +8,15 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { getMe, getTasks, claimLoginBonus, completeTask, getLoginBonusStatus, User, Task } from "@/lib/api";
+import { API_BASE_URL } from "@/lib/api";
+
+const DAYS = [
+    { key: "MONDAY", label: "月曜" },
+    { key: "TUESDAY", label: "火曜" },
+    { key: "WEDNESDAY", label: "水曜" },
+    { key: "THURSDAY", label: "木曜" },
+    { key: "FRIDAY", label: "金曜" },
+];
 
 export default function DashboardPage() {
     const router = useRouter();
@@ -15,6 +24,7 @@ export default function DashboardPage() {
     const [tasks, setTasks] = useState<Task[]>([]);
     const [loading, setLoading] = useState(true);
     const [loginBonusClaimed, setLoginBonusClaimed] = useState(false);
+    const [draggedTask, setDraggedTask] = useState<string | null>(null);
 
     useEffect(() => {
         const token = localStorage.getItem("token");
@@ -33,7 +43,6 @@ export default function DashboardPage() {
 
                 if (userRes.success && userRes.data) {
                     setUser(userRes.data);
-                    // localStorageも更新
                     localStorage.setItem("user", JSON.stringify({
                         id: userRes.data.id,
                         display_name: userRes.data.display_name,
@@ -70,7 +79,6 @@ export default function DashboardPage() {
         const result = await claimLoginBonus(token);
         if (result.success) {
             setLoginBonusClaimed(true);
-            // ユーザー情報を再取得
             const userRes = await getMe(token);
             if (userRes.success && userRes.data) {
                 setUser(userRes.data);
@@ -84,7 +92,6 @@ export default function DashboardPage() {
 
         const result = await completeTask(token, taskId);
         if (result.success) {
-            // タスクとユーザー情報を再取得
             const [userRes, tasksRes] = await Promise.all([
                 getMe(token),
                 getTasks(token),
@@ -94,7 +101,48 @@ export default function DashboardPage() {
         }
     };
 
-    // レベルアップに必要なXP計算
+    // ドラッグ開始
+    const handleDragStart = (e: DragEvent<HTMLDivElement>, taskId: string) => {
+        setDraggedTask(taskId);
+        e.dataTransfer.effectAllowed = "move";
+    };
+
+    // ドロップ可能領域に入った時
+    const handleDragOver = (e: DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = "move";
+    };
+
+    // ドロップ時
+    const handleDrop = async (e: DragEvent<HTMLDivElement>, day: string | null) => {
+        e.preventDefault();
+        if (!draggedTask) return;
+
+        const token = localStorage.getItem("token");
+        if (!token) return;
+
+        try {
+            const res = await fetch(`${API_BASE_URL}/tasks/${draggedTask}`, {
+                method: "PATCH",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({ scheduled_day: day || "" }),
+            });
+            const data = await res.json();
+            if (data.success) {
+                // タスク一覧を更新
+                setTasks(prev => prev.map(t =>
+                    t.id === draggedTask ? { ...t, scheduled_day: day } : t
+                ));
+            }
+        } catch (error) {
+            console.error("Failed to update task:", error);
+        }
+        setDraggedTask(null);
+    };
+
     const getRequiredXp = (level: number) => Math.floor(100 * Math.pow(level, 1.5));
     const xpProgress = user ? (user.current_xp / getRequiredXp(user.level)) * 100 : 0;
 
@@ -111,6 +159,20 @@ export default function DashboardPage() {
         LOW: "低",
         URGENT: "緊急",
     };
+
+    const statusColors: Record<string, string> = {
+        PENDING: "bg-gray-500",
+        IN_PROGRESS: "bg-blue-500",
+        COMPLETED: "bg-green-500",
+    };
+
+    // 曜日ごとにタスクをグループ化
+    const getTasksByDay = (day: string) => {
+        return tasks.filter(t => (t as any).scheduled_day === day && t.status !== "COMPLETED");
+    };
+
+    // 未割り当てタスク
+    const unscheduledTasks = tasks.filter(t => !(t as any).scheduled_day && t.status !== "COMPLETED");
 
     if (loading) {
         return (
@@ -199,6 +261,84 @@ export default function DashboardPage() {
                     </Card>
                 </div>
 
+                {/* 週間プランナー */}
+                <Card className="bg-white/5 border-white/10 backdrop-blur mb-8">
+                    <CardHeader>
+                        <CardTitle className="text-white flex items-center gap-2">
+                            📅 週間プランナー
+                            <span className="text-sm font-normal text-gray-400">
+                                （タスクをドラッグして曜日に割り当て）
+                            </span>
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="grid grid-cols-5 gap-3">
+                            {DAYS.map(({ key, label }) => (
+                                <div
+                                    key={key}
+                                    className="min-h-[200px] rounded-lg border border-white/10 bg-white/5 p-2"
+                                    onDragOver={handleDragOver}
+                                    onDrop={(e) => handleDrop(e, key)}
+                                >
+                                    <div className="text-center text-white font-medium mb-2 pb-2 border-b border-white/10">
+                                        {label}
+                                    </div>
+                                    <div className="space-y-2">
+                                        {getTasksByDay(key).map(task => (
+                                            <div
+                                                key={task.id}
+                                                draggable
+                                                onDragStart={(e) => handleDragStart(e, task.id)}
+                                                className={`p-2 rounded bg-white/10 border border-white/20 cursor-move hover:bg-white/20 transition-colors ${draggedTask === task.id ? "opacity-50" : ""
+                                                    }`}
+                                            >
+                                                <div className="flex items-center gap-1 mb-1">
+                                                    <div className={`w-2 h-2 rounded-full ${statusColors[task.status]}`} />
+                                                    <span className="text-white text-sm font-medium truncate">
+                                                        {task.title}
+                                                    </span>
+                                                </div>
+                                                <div className="flex items-center gap-2 text-xs text-gray-400">
+                                                    <span>+{task.base_points}pt</span>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* 未割り当てタスク */}
+                        {unscheduledTasks.length > 0 && (
+                            <div
+                                className="mt-4 p-3 rounded-lg border border-dashed border-white/20 bg-white/5"
+                                onDragOver={handleDragOver}
+                                onDrop={(e) => handleDrop(e, null)}
+                            >
+                                <div className="text-gray-400 text-sm mb-2">📥 未割り当てタスク（ドラッグして曜日に配置）</div>
+                                <div className="flex flex-wrap gap-2">
+                                    {unscheduledTasks.map(task => (
+                                        <div
+                                            key={task.id}
+                                            draggable
+                                            onDragStart={(e) => handleDragStart(e, task.id)}
+                                            className={`px-3 py-2 rounded bg-white/10 border border-white/20 cursor-move hover:bg-white/20 transition-colors ${draggedTask === task.id ? "opacity-50" : ""
+                                                }`}
+                                        >
+                                            <div className="flex items-center gap-2">
+                                                <Badge className={priorityColors[task.priority] + " text-xs"}>
+                                                    {priorityLabels[task.priority]}
+                                                </Badge>
+                                                <span className="text-white text-sm">{task.title}</span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
+
                 {/* Tasks */}
                 <Card className="bg-white/5 border-white/10 backdrop-blur">
                     <CardHeader>
@@ -247,6 +387,11 @@ export default function DashboardPage() {
                                                         <Badge className={statusConfig[task.status]?.color}>
                                                             {statusConfig[task.status]?.label || task.status}
                                                         </Badge>
+                                                        {(task as any).scheduled_day && (
+                                                            <Badge className="bg-purple-500/20 text-purple-300 border-purple-500/30">
+                                                                {DAYS.find(d => d.key === (task as any).scheduled_day)?.label}
+                                                            </Badge>
+                                                        )}
                                                         <h3 className="text-white font-medium">{task.title}</h3>
                                                     </div>
                                                     <p className="text-sm text-gray-400 mb-2">{task.description}</p>
@@ -270,3 +415,4 @@ export default function DashboardPage() {
         </div>
     );
 }
+
