@@ -62,6 +62,34 @@ export default function RewardsAdminPage() {
 
     const emojis = ["🎁", "🎫", "☕", "🍽️", "📚", "🎮", "🏃", "💆", "🎬", "🛒", "💸", "📖"];
 
+    // テンプレート選択用にユニークな報酬を取得
+    const getUniqueRewards = () => {
+        const seen = new Map<string, Reward>();
+        rewards.forEach(r => {
+            const key = `${r.name}-${r.category}-${r.points_required}`;
+            if (!seen.has(key)) {
+                seen.set(key, r);
+            }
+        });
+        return Array.from(seen.values());
+    };
+
+    // テンプレートから報酬を自動入力
+    const applyTemplate = (rewardId: string) => {
+        const reward = rewards.find(r => r.id === rewardId);
+        if (reward) {
+            setFormData({
+                name: reward.name,
+                description: reward.description,
+                category: reward.category,
+                points_required: String(reward.points_required),
+                stock: "1", // 新規追加時はデフォルト1
+                image_url: reward.image_url,
+                is_active: true,
+            });
+        }
+    };
+
     useEffect(() => {
         const token = localStorage.getItem("token");
         const userData = localStorage.getItem("user");
@@ -312,6 +340,27 @@ export default function RewardsAdminPage() {
                         <DialogTitle>{isNew ? "新規報酬の追加" : "報酬を編集"}</DialogTitle>
                     </DialogHeader>
                     <div className="space-y-4 pt-4">
+                        {/* テンプレート選択（新規追加時のみ） */}
+                        {isNew && getUniqueRewards().length > 0 && (
+                            <div className="p-3 rounded-lg bg-purple-500/10 border border-purple-500/30">
+                                <Label className="text-purple-300 text-sm mb-2 block">
+                                    📋 既存の報酬をテンプレートとして使用
+                                </Label>
+                                <Select onValueChange={applyTemplate}>
+                                    <SelectTrigger className="bg-white/10 border-white/20 text-white">
+                                        <SelectValue placeholder="選択して自動入力..." />
+                                    </SelectTrigger>
+                                    <SelectContent className="bg-slate-800 border-white/10 max-h-60">
+                                        {getUniqueRewards().map((r) => (
+                                            <SelectItem key={r.id} value={r.id}>
+                                                {r.image_url} {r.name} ({r.points_required.toLocaleString()}pt)
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        )}
+
                         <div className="space-y-2">
                             <Label className="text-gray-200">
                                 報酬名 <span className="text-red-400">*</span>
