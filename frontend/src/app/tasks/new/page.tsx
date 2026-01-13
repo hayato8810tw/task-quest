@@ -74,13 +74,13 @@ function NewTaskForm() {
 
         // 並列でデータ取得
         Promise.all([
-            fetch(`${API_BASE_URL}/api/users`, {
+            fetch(`${API_BASE_URL}/users`, {
                 headers: { Authorization: `Bearer ${token}` },
             }).then(res => res.json()),
-            fetch(`${API_BASE_URL}/api/projects`, {
+            fetch(`${API_BASE_URL}/projects`, {
                 headers: { Authorization: `Bearer ${token}` },
             }).then(res => res.json()),
-            fetch(`${API_BASE_URL}/api/epics`, {
+            fetch(`${API_BASE_URL}/epics`, {
                 headers: { Authorization: `Bearer ${token}` },
             }).then(res => res.json()),
         ]).then(([usersData, projectsData, epicsData]) => {
@@ -141,7 +141,7 @@ function NewTaskForm() {
 
         setCreatingProject(true);
         try {
-            const res = await fetch(`${API_BASE_URL}/api/projects`, {
+            const res = await fetch(`${API_BASE_URL}/projects`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -173,7 +173,7 @@ function NewTaskForm() {
 
         setCreatingEpic(true);
         try {
-            const res = await fetch(`${API_BASE_URL}/api/epics`, {
+            const res = await fetch(`${API_BASE_URL}/epics`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -222,7 +222,7 @@ function NewTaskForm() {
         console.log("Calling AI API...");
 
         try {
-            const res = await fetch(`${API_BASE_URL}/api/ai/suggest-points`, {
+            const res = await fetch(`${API_BASE_URL}/ai/suggest-points`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -267,7 +267,7 @@ function NewTaskForm() {
         if (!token) return;
 
         try {
-            const res = await fetch(`${API_BASE_URL}/api/tasks`, {
+            const res = await fetch(`${API_BASE_URL}/tasks`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

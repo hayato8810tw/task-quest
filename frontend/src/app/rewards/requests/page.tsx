@@ -62,7 +62,7 @@ export default function RewardRequestsPage() {
         if (!token) return;
 
         try {
-            const res = await fetch(`${API_BASE_URL}/api/rewards/admin/redemptions`, {
+            const res = await fetch(`${API_BASE_URL}/rewards/admin/redemptions`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
             const data = await res.json();
@@ -84,7 +84,7 @@ export default function RewardRequestsPage() {
 
         setProcessing(id);
         try {
-            const res = await fetch(`${API_BASE_URL}/api/rewards/redemptions/${id}/approve`, {
+            const res = await fetch(`${API_BASE_URL}/rewards/redemptions/${id}/approve`, {
                 method: "PATCH",
                 headers: { Authorization: `Bearer ${token}` },
             });
@@ -110,7 +110,7 @@ export default function RewardRequestsPage() {
 
         setProcessing(id);
         try {
-            const res = await fetch(`${API_BASE_URL}/api/rewards/redemptions/${id}/reject`, {
+            const res = await fetch(`${API_BASE_URL}/rewards/redemptions/${id}/reject`, {
                 method: "PATCH",
                 headers: { Authorization: `Bearer ${token}` },
             });

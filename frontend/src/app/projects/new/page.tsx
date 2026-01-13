@@ -29,7 +29,7 @@ export default function NewProjectPage() {
         }
 
         try {
-            const res = await fetch(`${API_BASE_URL}/api/projects`, {
+            const res = await fetch(`${API_BASE_URL}/projects`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

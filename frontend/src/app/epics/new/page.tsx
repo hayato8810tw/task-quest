@@ -38,7 +38,7 @@ function NewEpicForm() {
 
         const fetchProjects = async () => {
             try {
-                const res = await fetch(`${API_BASE_URL}/api/projects`, {
+                const res = await fetch(`${API_BASE_URL}/projects`, {
                     headers: { Authorization: `Bearer ${token}` },
                 });
                 const data = await res.json();
@@ -64,7 +64,7 @@ function NewEpicForm() {
         }
 
         try {
-            const res = await fetch(`${API_BASE_URL}/api/epics`, {
+            const res = await fetch(`${API_BASE_URL}/epics`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

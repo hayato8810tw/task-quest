@@ -87,7 +87,7 @@ export default function RewardsAdminPage() {
         if (!token) return;
 
         try {
-            const res = await fetch(`${API_BASE_URL}/api/rewards/admin/all`, {
+            const res = await fetch(`${API_BASE_URL}/rewards/admin/all`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
             const data = await res.json();
@@ -178,7 +178,7 @@ export default function RewardsAdminPage() {
         if (!token) return;
 
         try {
-            const res = await fetch(`${API_BASE_URL}/api/rewards/${id}`, {
+            const res = await fetch(`${API_BASE_URL}/rewards/${id}`, {
                 method: "DELETE",
                 headers: { Authorization: `Bearer ${token}` },
             });

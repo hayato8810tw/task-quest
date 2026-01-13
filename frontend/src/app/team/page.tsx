@@ -76,13 +76,13 @@ export default function TeamPage() {
         const fetchData = async () => {
             try {
                 const [membersRes, tasksRes, statsRes] = await Promise.all([
-                    fetch(`${API_BASE_URL}/api/team/members`, {
+                    fetch(`${API_BASE_URL}/team/members`, {
                         headers: { Authorization: `Bearer ${token}` },
                     }),
-                    fetch(`${API_BASE_URL}/api/team/tasks`, {
+                    fetch(`${API_BASE_URL}/team/tasks`, {
                         headers: { Authorization: `Bearer ${token}` },
                     }),
-                    fetch(`${API_BASE_URL}/api/team/stats`, {
+                    fetch(`${API_BASE_URL}/team/stats`, {
                         headers: { Authorization: `Bearer ${token}` },
                     }),
                 ]);

@@ -118,7 +118,7 @@ export default function ProjectsPage() {
 
         const fetchData = async () => {
             try {
-                const projectsRes = await fetch(`${API_BASE_URL}/api/projects`, {
+                const projectsRes = await fetch(`${API_BASE_URL}/projects`, {
                     headers: { Authorization: `Bearer ${token}` },
                 });
                 const projectsData = await projectsRes.json();
@@ -129,10 +129,10 @@ export default function ProjectsPage() {
                 const user = userData ? JSON.parse(userData) : null;
                 if (user?.role === "MANAGER" || user?.role === "ADMIN") {
                     const [membersRes, statsRes] = await Promise.all([
-                        fetch(`${API_BASE_URL}/api/team/members`, {
+                        fetch(`${API_BASE_URL}/team/members`, {
                             headers: { Authorization: `Bearer ${token}` },
                         }),
-                        fetch(`${API_BASE_URL}/api/team/stats`, {
+                        fetch(`${API_BASE_URL}/team/stats`, {
                             headers: { Authorization: `Bearer ${token}` },
                         }),
                     ]);
@@ -147,7 +147,7 @@ export default function ProjectsPage() {
                 }
 
                 // 部署一覧取得（常に取得）
-                const deptsRes = await fetch(`${API_BASE_URL}/api/departments`, {
+                const deptsRes = await fetch(`${API_BASE_URL}/departments`, {
                     headers: { Authorization: `Bearer ${token}` },
                 });
                 const deptsData = await deptsRes.json();
@@ -182,7 +182,7 @@ export default function ProjectsPage() {
 
         setSaving(true);
         try {
-            const res = await fetch(`${API_BASE_URL}/api/users/${editMember.id}`, {
+            const res = await fetch(`${API_BASE_URL}/users/${editMember.id}`, {
                 method: "PATCH",
                 headers: {
                     "Content-Type": "application/json",
@@ -528,7 +528,7 @@ export default function ProjectsPage() {
                                                 const token = localStorage.getItem("token");
                                                 if (!token) return;
                                                 try {
-                                                    const res = await fetch(`${API_BASE_URL}/api/departments`, {
+                                                    const res = await fetch(`${API_BASE_URL}/departments`, {
                                                         method: "POST",
                                                         headers: {
                                                             "Content-Type": "application/json",
@@ -595,7 +595,7 @@ export default function ProjectsPage() {
                                                             const token = localStorage.getItem("token");
                                                             if (!token) return;
                                                             try {
-                                                                const res = await fetch(`${API_BASE_URL}/api/departments/${editDepartment.id}`, {
+                                                                const res = await fetch(`${API_BASE_URL}/departments/${editDepartment.id}`, {
                                                                     method: "PATCH",
                                                                     headers: {
                                                                         "Content-Type": "application/json",
@@ -652,7 +652,7 @@ export default function ProjectsPage() {
                                                                 const token = localStorage.getItem("token");
                                                                 if (!token) return;
                                                                 try {
-                                                                    const res = await fetch(`${API_BASE_URL}/api/departments/${dept.id}`, {
+                                                                    const res = await fetch(`${API_BASE_URL}/departments/${dept.id}`, {
                                                                         method: "DELETE",
                                                                         headers: { Authorization: `Bearer ${token}` },
                                                                     });

@@ -52,7 +52,7 @@ export default function RewardsPage() {
 
     const fetchRedemptions = async (token: string) => {
         try {
-            const res = await fetch(`${API_BASE_URL}/api/rewards/redemptions`, {
+            const res = await fetch(`${API_BASE_URL}/rewards/redemptions`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
             const data = await res.json();
@@ -80,8 +80,8 @@ export default function RewardsPage() {
         const fetchData = async () => {
             try {
                 const [rewardsRes, userRes] = await Promise.all([
-                    fetch(`${API_BASE_URL}/api/rewards`),
-                    fetch(`${API_BASE_URL}/api/users/me`, {
+                    fetch(`${API_BASE_URL}/rewards`),
+                    fetch(`${API_BASE_URL}/users/me`, {
                         headers: { Authorization: `Bearer ${token}` },
                     }),
                 ]);
@@ -115,7 +115,7 @@ export default function RewardsPage() {
 
         setRedeeming(true);
         try {
-            const res = await fetch(`${API_BASE_URL}/api/rewards/redeem`, {
+            const res = await fetch(`${API_BASE_URL}/rewards/redeem`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -127,7 +127,7 @@ export default function RewardsPage() {
             const result = await res.json();
             if (result.success) {
                 // ユーザー情報を更新
-                const userRes = await fetch(`${API_BASE_URL}/api/users/me`, {
+                const userRes = await fetch(`${API_BASE_URL}/users/me`, {
                     headers: { Authorization: `Bearer ${token}` },
                 });
                 const userData = await userRes.json();

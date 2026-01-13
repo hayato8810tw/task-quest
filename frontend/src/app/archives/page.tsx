@@ -92,13 +92,13 @@ export default function ArchivesPage() {
 
         try {
             const [tasksRes, epicsRes, projectsRes] = await Promise.all([
-                fetch(`${API_BASE_URL}/api/archives/tasks`, {
+                fetch(`${API_BASE_URL}/archives/tasks`, {
                     headers: { Authorization: `Bearer ${token}` },
                 }),
-                fetch(`${API_BASE_URL}/api/archives/epics`, {
+                fetch(`${API_BASE_URL}/archives/epics`, {
                     headers: { Authorization: `Bearer ${token}` },
                 }),
-                fetch(`${API_BASE_URL}/api/archives/projects`, {
+                fetch(`${API_BASE_URL}/archives/projects`, {
                     headers: { Authorization: `Bearer ${token}` },
                 }),
             ]);
@@ -124,7 +124,7 @@ export default function ArchivesPage() {
         if (!token) return;
 
         try {
-            const res = await fetch(`${API_BASE_URL}/api/archives/candidates/${type}`, {
+            const res = await fetch(`${API_BASE_URL}/archives/candidates/${type}`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
             const data = await res.json();
@@ -142,7 +142,7 @@ export default function ArchivesPage() {
         if (!token) return;
 
         try {
-            const res = await fetch(`${API_BASE_URL}/api/archives/${type}/${id}`, {
+            const res = await fetch(`${API_BASE_URL}/archives/${type}/${id}`, {
                 method: "POST",
                 headers: { Authorization: `Bearer ${token}` },
             });
@@ -166,7 +166,7 @@ export default function ArchivesPage() {
 
         try {
             for (const candidate of candidates) {
-                await fetch(`${API_BASE_URL}/api/archives/${activeTab}/${candidate.id}`, {
+                await fetch(`${API_BASE_URL}/archives/${activeTab}/${candidate.id}`, {
                     method: "POST",
                     headers: { Authorization: `Bearer ${token}` },
                 });
@@ -186,7 +186,7 @@ export default function ArchivesPage() {
         if (!token) return;
 
         try {
-            const res = await fetch(`${API_BASE_URL}/api/archives/${type}/${id}`, {
+            const res = await fetch(`${API_BASE_URL}/archives/${type}/${id}`, {
                 method: "DELETE",
                 headers: { Authorization: `Bearer ${token}` },
             });

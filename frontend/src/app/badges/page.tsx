@@ -86,8 +86,8 @@ export default function BadgesPage() {
         const token = localStorage.getItem("token");
         try {
             const [allRes, myRes] = await Promise.all([
-                fetch(`${API_BASE_URL}/api/badges`),
-                fetch(`${API_BASE_URL}/api/badges/my`, {
+                fetch(`${API_BASE_URL}/badges`),
+                fetch(`${API_BASE_URL}/badges/my`, {
                     headers: { Authorization: `Bearer ${token}` },
                 }),
             ]);
@@ -109,7 +109,7 @@ export default function BadgesPage() {
         if (!token || !newBadge.name) return;
 
         try {
-            const res = await fetch(`${API_BASE_URL}/api/badges`, {
+            const res = await fetch(`${API_BASE_URL}/badges`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -136,7 +136,7 @@ export default function BadgesPage() {
         if (!token) return;
 
         try {
-            const res = await fetch(`${API_BASE_URL}/api/badges/${editBadge.id}`, {
+            const res = await fetch(`${API_BASE_URL}/badges/${editBadge.id}`, {
                 method: "PATCH",
                 headers: {
                     "Content-Type": "application/json",
@@ -169,7 +169,7 @@ export default function BadgesPage() {
         if (!token) return;
 
         try {
-            const res = await fetch(`${API_BASE_URL}/api/badges/${id}`, {
+            const res = await fetch(`${API_BASE_URL}/badges/${id}`, {
                 method: "DELETE",
                 headers: { Authorization: `Bearer ${token}` }
             });

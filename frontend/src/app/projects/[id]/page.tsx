@@ -79,7 +79,7 @@ export default function ProjectDetailPage() {
 
         const fetchProject = async () => {
             try {
-                const res = await fetch(`${API_BASE_URL}/api/projects/${projectId}`, {
+                const res = await fetch(`${API_BASE_URL}/projects/${projectId}`, {
                     headers: { Authorization: `Bearer ${token}` },
                 });
                 const data = await res.json();
@@ -114,7 +114,7 @@ export default function ProjectDetailPage() {
         if (!token) return;
 
         try {
-            const res = await fetch(`${API_BASE_URL}/api/tasks/${taskId}/status`, {
+            const res = await fetch(`${API_BASE_URL}/tasks/${taskId}/status`, {
                 method: "PATCH",
                 headers: {
                     "Content-Type": "application/json",

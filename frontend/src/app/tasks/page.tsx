@@ -69,10 +69,10 @@ export default function TasksPage() {
         // プロジェクトとエピックも取得
         Promise.all([
             fetchTasksData(),
-            fetch(`${API_BASE_URL}/api/projects`, {
+            fetch(`${API_BASE_URL}/projects`, {
                 headers: { Authorization: `Bearer ${token}` },
             }).then(res => res.json()),
-            fetch(`${API_BASE_URL}/api/epics`, {
+            fetch(`${API_BASE_URL}/epics`, {
                 headers: { Authorization: `Bearer ${token}` },
             }).then(res => res.json()),
         ]).then(([_, projectsData, epicsData]) => {
@@ -102,7 +102,7 @@ export default function TasksPage() {
         } else {
             // それ以外はステータス更新API
             try {
-                const res = await fetch(`${API_BASE_URL}/api/tasks/${taskId}/status`, {
+                const res = await fetch(`${API_BASE_URL}/tasks/${taskId}/status`, {
                     method: "PATCH",
                     headers: {
                         "Content-Type": "application/json",
@@ -129,7 +129,7 @@ export default function TasksPage() {
         }
 
         try {
-            const res = await fetch(`${API_BASE_URL}/api/tasks/${taskId}/reset`, {
+            const res = await fetch(`${API_BASE_URL}/tasks/${taskId}/reset`, {
                 method: "POST",
                 headers: {
                     Authorization: `Bearer ${token}`,
@@ -169,7 +169,7 @@ export default function TasksPage() {
 
         setSaving(true);
         try {
-            const res = await fetch(`${API_BASE_URL}/api/tasks/${editingTask.id}/epic`, {
+            const res = await fetch(`${API_BASE_URL}/tasks/${editingTask.id}/epic`, {
                 method: "PATCH",
                 headers: {
                     "Content-Type": "application/json",
