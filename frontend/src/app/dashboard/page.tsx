@@ -7,6 +7,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
 import { getMe, getTasks, claimLoginBonus, completeTask, getLoginBonusStatus, User, Task } from "@/lib/api";
 import { API_BASE_URL } from "@/lib/api";
 
@@ -25,6 +31,8 @@ export default function DashboardPage() {
     const [loading, setLoading] = useState(true);
     const [loginBonusClaimed, setLoginBonusClaimed] = useState(false);
     const [draggedTask, setDraggedTask] = useState<string | null>(null);
+    const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+    const [updatingStatus, setUpdatingStatus] = useState(false);
 
     useEffect(() => {
         const token = localStorage.getItem("token");
@@ -141,6 +149,50 @@ export default function DashboardPage() {
             console.error("Failed to update task:", error);
         }
         setDraggedTask(null);
+    };
+
+    // タスクステータス更新
+    const handleStatusChange = async (taskId: string, newStatus: string) => {
+        const token = localStorage.getItem("token");
+        if (!token) return;
+
+        setUpdatingStatus(true);
+        try {
+            const res = await fetch(`${API_BASE_URL}/tasks/${taskId}/status`, {
+                method: "PATCH",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({ status: newStatus }),
+            });
+            const data = await res.json();
+            if (data.success) {
+                // タスク一覧とユーザー情報を再取得
+                const [tasksRes, userRes] = await Promise.all([
+                    getTasks(token),
+                    getMe(token),
+                ]);
+                if (tasksRes.success && tasksRes.data) {
+                    setTasks(tasksRes.data);
+                    // モーダルのタスクも更新
+                    const updated = tasksRes.data.find((t: Task) => t.id === taskId);
+                    if (updated) setSelectedTask(updated);
+                }
+                if (userRes.success && userRes.data) setUser(userRes.data);
+            }
+        } catch (error) {
+            console.error("Failed to update status:", error);
+        }
+        setUpdatingStatus(false);
+    };
+
+    // タスクカードクリック
+    const handleTaskClick = (task: Task, e: React.MouseEvent) => {
+        // ドラッグ中はモーダルを開かない
+        if (draggedTask) return;
+        e.stopPropagation();
+        setSelectedTask(task);
     };
 
     const getRequiredXp = (level: number) => Math.floor(100 * Math.pow(level, 1.5));
@@ -289,7 +341,8 @@ export default function DashboardPage() {
                                                 key={task.id}
                                                 draggable
                                                 onDragStart={(e) => handleDragStart(e, task.id)}
-                                                className={`p-2 rounded bg-white/10 border border-white/20 cursor-move hover:bg-white/20 transition-colors ${draggedTask === task.id ? "opacity-50" : ""
+                                                onClick={(e) => handleTaskClick(task, e)}
+                                                className={`p-2 rounded bg-white/10 border border-white/20 cursor-pointer hover:bg-white/20 transition-colors ${draggedTask === task.id ? "opacity-50" : ""
                                                     }`}
                                             >
                                                 {/* プロジェクト・エピック */}
@@ -332,7 +385,8 @@ export default function DashboardPage() {
                                             key={task.id}
                                             draggable
                                             onDragStart={(e) => handleDragStart(e, task.id)}
-                                            className={`px-3 py-2 rounded bg-white/10 border border-white/20 cursor-move hover:bg-white/20 transition-colors ${draggedTask === task.id ? "opacity-50" : ""
+                                            onClick={(e) => handleTaskClick(task, e)}
+                                            className={`px-3 py-2 rounded bg-white/10 border border-white/20 cursor-pointer hover:bg-white/20 transition-colors ${draggedTask === task.id ? "opacity-50" : ""
                                                 }`}
                                         >
                                             {(task as any).epic && (
@@ -430,8 +484,114 @@ export default function DashboardPage() {
                         )}
                     </CardContent>
                 </Card>
+
+                {/* タスク詳細モーダル */}
+                <Dialog open={!!selectedTask} onOpenChange={(open) => !open && setSelectedTask(null)}>
+                    <DialogContent className="bg-slate-900 border-white/10 text-white max-w-lg">
+                        <DialogHeader>
+                            <DialogTitle className="text-xl font-bold flex items-center gap-2">
+                                {selectedTask && (
+                                    <>
+                                        <Badge className={priorityColors[selectedTask.priority]}>
+                                            {priorityLabels[selectedTask.priority]}
+                                        </Badge>
+                                        {selectedTask.title}
+                                    </>
+                                )}
+                            </DialogTitle>
+                        </DialogHeader>
+
+                        {selectedTask && (
+                            <div className="space-y-4 mt-2">
+                                {/* プロジェクト・エピック */}
+                                {(selectedTask as any).epic && (
+                                    <div className="p-3 rounded-lg bg-purple-500/10 border border-purple-500/30">
+                                        <div className="text-purple-300 text-sm">
+                                            📁 {(selectedTask as any).epic.project?.title} / {(selectedTask as any).epic.title}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* 説明 */}
+                                {selectedTask.description && (
+                                    <div className="p-3 rounded-lg bg-white/5 border border-white/10">
+                                        <div className="text-gray-400 text-xs mb-1">説明</div>
+                                        <p className="text-white text-sm">{selectedTask.description}</p>
+                                    </div>
+                                )}
+
+                                {/* ステータス */}
+                                <div className="p-3 rounded-lg bg-white/5 border border-white/10">
+                                    <div className="text-gray-400 text-xs mb-2">ステータス</div>
+                                    <div className="flex gap-2">
+                                        {[
+                                            { key: "PENDING", label: "未着手", color: "bg-gray-500 hover:bg-gray-600" },
+                                            { key: "IN_PROGRESS", label: "進行中", color: "bg-blue-500 hover:bg-blue-600" },
+                                            { key: "COMPLETED", label: "完了", color: "bg-green-500 hover:bg-green-600" },
+                                        ].map((status) => (
+                                            <Button
+                                                key={status.key}
+                                                size="sm"
+                                                disabled={updatingStatus || selectedTask.status === status.key}
+                                                onClick={() => handleStatusChange(selectedTask.id, status.key)}
+                                                className={`${selectedTask.status === status.key
+                                                        ? status.color + " ring-2 ring-white ring-offset-2 ring-offset-slate-900"
+                                                        : "bg-white/10 hover:bg-white/20"
+                                                    } transition-all`}
+                                            >
+                                                {status.label}
+                                            </Button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* 詳細情報 */}
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="p-3 rounded-lg bg-white/5 border border-white/10">
+                                        <div className="text-gray-400 text-xs mb-1">🎯 ポイント</div>
+                                        <div className="text-yellow-400 font-bold">+{selectedTask.base_points} pt</div>
+                                    </div>
+                                    <div className="p-3 rounded-lg bg-white/5 border border-white/10">
+                                        <div className="text-gray-400 text-xs mb-1">⚡ 経験値</div>
+                                        <div className="text-emerald-400 font-bold">+{selectedTask.bonus_xp} XP</div>
+                                    </div>
+                                    <div className="p-3 rounded-lg bg-white/5 border border-white/10">
+                                        <div className="text-gray-400 text-xs mb-1">📊 難易度</div>
+                                        <div className="text-white font-bold">{"⭐".repeat(selectedTask.difficulty)}</div>
+                                    </div>
+                                    <div className="p-3 rounded-lg bg-white/5 border border-white/10">
+                                        <div className="text-gray-400 text-xs mb-1">📅 期限</div>
+                                        <div className="text-white font-bold text-sm">
+                                            {selectedTask.deadline
+                                                ? new Date(selectedTask.deadline).toLocaleDateString("ja-JP")
+                                                : "なし"}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* 予定曜日 */}
+                                {(selectedTask as any).scheduled_day && (
+                                    <div className="p-3 rounded-lg bg-white/5 border border-white/10">
+                                        <div className="text-gray-400 text-xs mb-1">🗓️ 予定曜日</div>
+                                        <div className="text-white font-bold">
+                                            {DAYS.find(d => d.key === (selectedTask as any).scheduled_day)?.label || "未設定"}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* 閉じるボタン */}
+                                <Button
+                                    variant="outline"
+                                    onClick={() => setSelectedTask(null)}
+                                    className="w-full border-white/20 text-white hover:bg-white/10"
+                                >
+                                    閉じる
+                                </Button>
+                            </div>
+                        )}
+                    </DialogContent>
+                </Dialog>
             </main>
         </div>
     );
 }
-
