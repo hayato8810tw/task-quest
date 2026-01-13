@@ -319,6 +319,65 @@ router.post('/:id/complete', authMiddleware, async (req: Request, res: Response)
     }
 });
 
+// タスク更新（全般）
+router.patch('/:id', authMiddleware, async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const { title, description, priority, difficulty, base_points, bonus_xp, deadline } = req.body;
+
+        const task = await prisma.task.findUnique({
+            where: { id }
+        });
+
+        if (!task) {
+            return res.status(404).json({
+                success: false,
+                error: 'Task not found'
+            });
+        }
+
+        const updatedTask = await prisma.task.update({
+            where: { id },
+            data: {
+                ...(title !== undefined && { title }),
+                ...(description !== undefined && { description }),
+                ...(priority !== undefined && { priority }),
+                ...(difficulty !== undefined && { difficulty: Number(difficulty) }),
+                ...(base_points !== undefined && { basePoints: Number(base_points) }),
+                ...(bonus_xp !== undefined && { bonusXp: Number(bonus_xp) }),
+                ...(deadline !== undefined && { deadline: deadline ? new Date(deadline) : null })
+            },
+            include: {
+                creator: { select: { id: true, displayName: true } },
+                taskAssignments: {
+                    include: { user: { select: { id: true, displayName: true } } }
+                }
+            }
+        });
+
+        res.json({
+            success: true,
+            data: {
+                id: updatedTask.id,
+                title: updatedTask.title,
+                description: updatedTask.description,
+                priority: updatedTask.priority,
+                difficulty: updatedTask.difficulty,
+                base_points: updatedTask.basePoints,
+                bonus_xp: updatedTask.bonusXp,
+                deadline: updatedTask.deadline,
+                status: updatedTask.status
+            }
+        });
+    } catch (error) {
+        console.error('Update task error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Internal server error'
+        });
+    }
+});
+
 // タスクステータス更新
 router.patch('/:id/status', authMiddleware, async (req: Request, res: Response) => {
     try {
