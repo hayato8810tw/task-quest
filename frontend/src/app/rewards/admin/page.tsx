@@ -164,8 +164,8 @@ export default function RewardsAdminPage() {
         setSaving(true);
         try {
             const url = isNew
-                ? "http://localhost:3001/api/rewards"
-                : `http://localhost:3001/api/rewards/${editReward?.id}`;
+                ? `${API_BASE_URL}/rewards`
+                : `${API_BASE_URL}/rewards/${editReward?.id}`;
 
             const res = await fetch(url, {
                 method: isNew ? "POST" : "PATCH",
