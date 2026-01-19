@@ -54,7 +54,7 @@ export interface Task {
         title: string;
         project?: {
             id: string;
-            name: string;
+            title: string;
         };
     };
     created_by: { id: string; display_name: string };

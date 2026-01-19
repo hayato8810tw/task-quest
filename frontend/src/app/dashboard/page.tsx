@@ -668,7 +668,7 @@ function TaskColumn({ title, statusColor, countColor, tasks, onTaskClick }: { ti
 
         tasks.forEach((task) => {
             const projectId = task.epic?.project?.id || noProjectKey;
-            const projectName = task.epic?.project?.name || "未分類";
+            const projectName = task.epic?.project?.title || "未分類";
 
             if (!groups[projectId]) {
                 groups[projectId] = { name: projectName, tasks: [] };
