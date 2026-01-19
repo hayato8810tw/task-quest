@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, DragEvent } from "react";
+import { useEffect, useState, DragEvent, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Navbar } from "@/components/Navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -521,52 +521,31 @@ export default function DashboardPage() {
                         ) : (
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 {/* 未着手 (PENDING) */}
-                                <div className="space-y-3">
-                                    <div className="flex items-center gap-2 mb-2 pb-2 border-b border-white/10">
-                                        <div className="w-3 h-3 rounded-full bg-yellow-500" />
-                                        <span className="text-gray-300 font-medium">未着手</span>
-                                        <Badge variant="outline" className="ml-auto text-yellow-300 border-yellow-500/30">
-                                            {tasks.filter(t => t.status === "PENDING").length}
-                                        </Badge>
-                                    </div>
-                                    <div className="space-y-3">
-                                        {tasks.filter(t => t.status === "PENDING").map(task => (
-                                            <TaskCard key={task.id} task={task} onClick={() => handleTaskClick(task, {} as any)} />
-                                        ))}
-                                    </div>
-                                </div>
+                                <TaskColumn
+                                    title="未着手"
+                                    statusColor="bg-yellow-500"
+                                    countColor="text-yellow-300 border-yellow-500/30"
+                                    tasks={tasks.filter(t => t.status === "PENDING")}
+                                    onTaskClick={(task) => handleTaskClick(task, {} as any)}
+                                />
 
                                 {/* 進行中 (IN_PROGRESS) */}
-                                <div className="space-y-3">
-                                    <div className="flex items-center gap-2 mb-2 pb-2 border-b border-white/10">
-                                        <div className="w-3 h-3 rounded-full bg-blue-500 animate-pulse" />
-                                        <span className="text-blue-300 font-medium">進行中</span>
-                                        <Badge variant="outline" className="ml-auto text-blue-300 border-blue-500/30">
-                                            {tasks.filter(t => t.status === "IN_PROGRESS").length}
-                                        </Badge>
-                                    </div>
-                                    <div className="space-y-3">
-                                        {tasks.filter(t => t.status === "IN_PROGRESS").map(task => (
-                                            <TaskCard key={task.id} task={task} onClick={() => handleTaskClick(task, {} as any)} />
-                                        ))}
-                                    </div>
-                                </div>
+                                <TaskColumn
+                                    title="進行中"
+                                    statusColor="bg-blue-500 animate-pulse"
+                                    countColor="text-blue-300 border-blue-500/30"
+                                    tasks={tasks.filter(t => t.status === "IN_PROGRESS")}
+                                    onTaskClick={(task) => handleTaskClick(task, {} as any)}
+                                />
 
                                 {/* 完了 (COMPLETED) */}
-                                <div className="space-y-3">
-                                    <div className="flex items-center gap-2 mb-2 pb-2 border-b border-white/10">
-                                        <div className="w-3 h-3 rounded-full bg-green-500" />
-                                        <span className="text-green-300 font-medium">完了済</span>
-                                        <Badge variant="outline" className="ml-auto text-green-300 border-green-500/30">
-                                            {tasks.filter(t => t.status === "COMPLETED").length}
-                                        </Badge>
-                                    </div>
-                                    <div className="space-y-3">
-                                        {tasks.filter(t => t.status === "COMPLETED").map(task => (
-                                            <TaskCard key={task.id} task={task} onClick={() => handleTaskClick(task, {} as any)} />
-                                        ))}
-                                    </div>
-                                </div>
+                                <TaskColumn
+                                    title="完了済"
+                                    statusColor="bg-green-500"
+                                    countColor="text-green-300 border-green-500/30"
+                                    tasks={tasks.filter(t => t.status === "COMPLETED")}
+                                    onTaskClick={(task) => handleTaskClick(task, {} as any)}
+                                />
                             </div>
                         )}
                     </CardContent>
@@ -678,6 +657,68 @@ export default function DashboardPage() {
                     </DialogContent>
                 </Dialog>
             </main>
+        </div>
+    );
+}
+
+function TaskColumn({ title, statusColor, countColor, tasks, onTaskClick }: { title: string, statusColor: string, countColor: string, tasks: Task[], onTaskClick: (task: Task) => void }) {
+    const groupedTasks = useMemo(() => {
+        const groups: Record<string, { name: string, tasks: Task[] }> = {};
+        const noProjectKey = "other";
+
+        tasks.forEach((task) => {
+            const projectId = task.epic?.project?.id || noProjectKey;
+            const projectName = task.epic?.project?.name || "未分類";
+
+            if (!groups[projectId]) {
+                groups[projectId] = { name: projectName, tasks: [] };
+            }
+            groups[projectId].tasks.push(task);
+        });
+
+        return groups;
+    }, [tasks]);
+
+    const projectIds = Object.keys(groupedTasks).sort((a, b) => {
+        if (a === "other") return 1;
+        if (b === "other") return -1;
+        return 0;
+    });
+
+    return (
+        <div className="space-y-4">
+            <div className="flex items-center gap-2 mb-2 pb-2 border-b border-white/10">
+                <div className={`w-3 h-3 rounded-full ${statusColor}`} />
+                <span className="text-gray-300 font-medium">{title}</span>
+                <Badge variant="outline" className={`ml-auto ${countColor}`}>
+                    {tasks.length}
+                </Badge>
+            </div>
+
+            <div className="space-y-6">
+                {projectIds.map(pid => {
+                    const group = groupedTasks[pid];
+                    return (
+                        <div key={pid} className="space-y-2">
+                            {pid !== "other" && (
+                                <h4 className="flex items-center gap-2 text-xs font-semibold text-purple-300 uppercase tracking-wider pl-1 opacity-80 border-b border-white/5 pb-1 mb-2">
+                                    📁 {group.name}
+                                </h4>
+                            )}
+                            <div className="space-y-3">
+                                {group.tasks.map(task => (
+                                    <TaskCard key={task.id} task={task} onClick={() => onTaskClick(task)} />
+                                ))}
+                            </div>
+                        </div>
+                    );
+                })}
+                {tasks.length === 0 && (
+                    <div className="text-center py-8 text-gray-500 text-sm italic">
+                        タスクはありません
+                    </div>
+                )}
+            </div>
         </div>
     );
 }

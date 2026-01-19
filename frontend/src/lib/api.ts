@@ -49,6 +49,14 @@ export interface Task {
     status: string;
     tags: string[];
     epicId?: string;
+    epic?: {
+        id: string;
+        title: string;
+        project?: {
+            id: string;
+            name: string;
+        };
+    };
     created_by: { id: string; display_name: string };
     assigned_to: Array<{ id: string; display_name: string }>;
 }
