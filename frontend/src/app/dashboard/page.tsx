@@ -24,6 +24,20 @@ const DAYS = [
     { key: "FRIDAY", label: "金曜" },
 ];
 
+const priorityColors: Record<string, string> = {
+    HIGH: "bg-red-500/20 text-red-300 border-red-500/30",
+    MEDIUM: "bg-yellow-500/20 text-yellow-300 border-yellow-500/30",
+    LOW: "bg-green-500/20 text-green-300 border-green-500/30",
+    URGENT: "bg-purple-500/20 text-purple-300 border-purple-500/30",
+};
+
+const priorityLabels: Record<string, string> = {
+    HIGH: "高",
+    MEDIUM: "中",
+    LOW: "低",
+    URGENT: "緊急",
+};
+
 export default function DashboardPage() {
     const router = useRouter();
     const [user, setUser] = useState<User | null>(null);
@@ -198,19 +212,7 @@ export default function DashboardPage() {
     const getRequiredXp = (level: number) => Math.floor(100 * Math.pow(level, 1.5));
     const xpProgress = user ? (user.current_xp / getRequiredXp(user.level)) * 100 : 0;
 
-    const priorityColors: Record<string, string> = {
-        HIGH: "bg-red-500/20 text-red-300 border-red-500/30",
-        MEDIUM: "bg-yellow-500/20 text-yellow-300 border-yellow-500/30",
-        LOW: "bg-green-500/20 text-green-300 border-green-500/30",
-        URGENT: "bg-purple-500/20 text-purple-300 border-purple-500/30",
-    };
 
-    const priorityLabels: Record<string, string> = {
-        HIGH: "高",
-        MEDIUM: "中",
-        LOW: "低",
-        URGENT: "緊急",
-    };
 
     const statusColors: Record<string, string> = {
         PENDING: "bg-gray-500",
@@ -517,63 +519,54 @@ export default function DashboardPage() {
                         {tasks.length === 0 ? (
                             <p className="text-gray-400">割り当てられたタスクはありません</p>
                         ) : (
-                            <div className="space-y-4">
-                                {[...tasks].sort((a, b) => {
-                                    const statusOrder: Record<string, number> = { IN_PROGRESS: 0, PENDING: 1, COMPLETED: 2 };
-                                    return (statusOrder[a.status] ?? 99) - (statusOrder[b.status] ?? 99);
-                                }).map((task) => {
-                                    const statusConfig: Record<string, { label: string; color: string }> = {
-                                        PENDING: { label: "未着手", color: "bg-gray-500/20 text-gray-300" },
-                                        IN_PROGRESS: { label: "進行中", color: "bg-blue-500/20 text-blue-300" },
-                                        COMPLETED: { label: "完了", color: "bg-green-500/20 text-green-300" },
-                                    };
-                                    const borderColor = task.status === "IN_PROGRESS"
-                                        ? "border-l-4 border-l-blue-500"
-                                        : task.status === "COMPLETED"
-                                            ? "border-l-4 border-l-gray-500"
-                                            : "";
-                                    const completedStyle = task.status === "COMPLETED" ? "opacity-50 hover:opacity-100" : "";
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                {/* 未着手 (PENDING) */}
+                                <div className="space-y-3">
+                                    <div className="flex items-center gap-2 mb-2 pb-2 border-b border-white/10">
+                                        <div className="w-3 h-3 rounded-full bg-yellow-500" />
+                                        <span className="text-gray-300 font-medium">未着手</span>
+                                        <Badge variant="outline" className="ml-auto text-yellow-300 border-yellow-500/30">
+                                            {tasks.filter(t => t.status === "PENDING").length}
+                                        </Badge>
+                                    </div>
+                                    <div className="space-y-3">
+                                        {tasks.filter(t => t.status === "PENDING").map(task => (
+                                            <TaskCard key={task.id} task={task} onClick={() => handleTaskClick(task, {} as any)} />
+                                        ))}
+                                    </div>
+                                </div>
 
-                                    return (
-                                        <div
-                                            key={task.id}
-                                            className={`p-4 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-all duration-200 ${borderColor} ${completedStyle}`}
-                                        >
-                                            {task.status === "IN_PROGRESS" && (
-                                                <div className="flex items-center gap-2 mb-2 px-2 py-1 rounded bg-blue-500/20">
-                                                    <span className="animate-pulse">🔵</span>
-                                                    <span className="text-blue-300 text-sm font-medium">進行中</span>
-                                                </div>
-                                            )}
-                                            <div className="flex items-start justify-between gap-4">
-                                                <div className="flex-1">
-                                                    <div className="flex items-center gap-2 mb-1">
-                                                        <Badge className={priorityColors[task.priority]}>
-                                                            {priorityLabels[task.priority] || task.priority}
-                                                        </Badge>
-                                                        <Badge className={statusConfig[task.status]?.color}>
-                                                            {statusConfig[task.status]?.label || task.status}
-                                                        </Badge>
-                                                        {(task as any).scheduled_day && (
-                                                            <Badge className="bg-purple-500/20 text-purple-300 border-purple-500/30">
-                                                                {DAYS.find(d => d.key === (task as any).scheduled_day)?.label}
-                                                            </Badge>
-                                                        )}
-                                                        <h3 className="text-white font-medium">{task.title}</h3>
-                                                    </div>
-                                                    <p className="text-sm text-gray-400 mb-2">{task.description}</p>
-                                                    <div className="flex items-center gap-4 text-sm text-gray-300">
-                                                        <span>🎯 +{task.base_points} pt</span>
-                                                        <span>⚡ +{task.bonus_xp} XP</span>
-                                                        {task.deadline && (
-                                                            <span>📅 {new Date(task.deadline).toLocaleDateString('ja-JP')}</span>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    );
-                                })}
+                                {/* 進行中 (IN_PROGRESS) */}
+                                <div className="space-y-3">
+                                    <div className="flex items-center gap-2 mb-2 pb-2 border-b border-white/10">
+                                        <div className="w-3 h-3 rounded-full bg-blue-500 animate-pulse" />
+                                        <span className="text-blue-300 font-medium">進行中</span>
+                                        <Badge variant="outline" className="ml-auto text-blue-300 border-blue-500/30">
+                                            {tasks.filter(t => t.status === "IN_PROGRESS").length}
+                                        </Badge>
+                                    </div>
+                                    <div className="space-y-3">
+                                        {tasks.filter(t => t.status === "IN_PROGRESS").map(task => (
+                                            <TaskCard key={task.id} task={task} onClick={() => handleTaskClick(task, {} as any)} />
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* 完了 (COMPLETED) */}
+                                <div className="space-y-3">
+                                    <div className="flex items-center gap-2 mb-2 pb-2 border-b border-white/10">
+                                        <div className="w-3 h-3 rounded-full bg-green-500" />
+                                        <span className="text-green-300 font-medium">完了済</span>
+                                        <Badge variant="outline" className="ml-auto text-green-300 border-green-500/30">
+                                            {tasks.filter(t => t.status === "COMPLETED").length}
+                                        </Badge>
+                                    </div>
+                                    <div className="space-y-3">
+                                        {tasks.filter(t => t.status === "COMPLETED").map(task => (
+                                            <TaskCard key={task.id} task={task} onClick={() => handleTaskClick(task, {} as any)} />
+                                        ))}
+                                    </div>
+                                </div>
                             </div>
                         )}
                     </CardContent>
@@ -685,6 +678,60 @@ export default function DashboardPage() {
                     </DialogContent>
                 </Dialog>
             </main>
+        </div>
+    );
+}
+
+function TaskCard({ task, onClick }: { task: Task; onClick: () => void }) {
+    const statusConfig: Record<string, { label: string; color: string }> = {
+        PENDING: { label: "未着手", color: "bg-gray-500/20 text-gray-300" },
+        IN_PROGRESS: { label: "進行中", color: "bg-blue-500/20 text-blue-300" },
+        COMPLETED: { label: "完了", color: "bg-green-500/20 text-green-300" },
+    };
+    const borderColor = task.status === "IN_PROGRESS"
+        ? "border-l-4 border-l-blue-500"
+        : task.status === "COMPLETED"
+            ? "border-l-4 border-l-gray-500"
+            : "";
+    const completedStyle = task.status === "COMPLETED" ? "opacity-50 hover:opacity-100" : "";
+
+    return (
+        <div
+            onClick={onClick}
+            className={`p-4 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-all duration-200 cursor-pointer ${borderColor} ${completedStyle}`}
+        >
+            {task.status === "IN_PROGRESS" && (
+                <div className="flex items-center gap-2 mb-2 px-2 py-1 rounded bg-blue-500/20 w-fit">
+                    <span className="animate-pulse">🔵</span>
+                    <span className="text-blue-300 text-sm font-medium">進行中</span>
+                </div>
+            )}
+            <div className="flex items-start justify-between gap-4">
+                <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
+                        <Badge className={priorityColors[task.priority]}>
+                            {priorityLabels[task.priority] || task.priority}
+                        </Badge>
+                        <Badge className={statusConfig[task.status]?.color}>
+                            {statusConfig[task.status]?.label || task.status}
+                        </Badge>
+                        {(task as any).scheduled_day && (
+                            <Badge className="bg-purple-500/20 text-purple-300 border-purple-500/30">
+                                {DAYS.find(d => d.key === (task as any).scheduled_day)?.label}
+                            </Badge>
+                        )}
+                    </div>
+                    <h3 className="text-white font-medium mb-1 mt-1">{task.title}</h3>
+                    <p className="text-sm text-gray-400 mb-2 line-clamp-2">{task.description}</p>
+                    <div className="flex items-center gap-4 text-sm text-gray-300">
+                        <span>🎯 +{task.base_points} pt</span>
+                        <span>⚡ +{task.bonus_xp} XP</span>
+                        {task.deadline && (
+                            <span>📅 {new Date(task.deadline).toLocaleDateString('ja-JP')}</span>
+                        )}
+                    </div>
+                </div>
+            </div>
         </div>
     );
 }
